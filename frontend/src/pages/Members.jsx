@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Edit2, LogOut } from 'lucide-react';
 
 const API_URL = 'http://localhost/backend';
 
@@ -9,33 +10,42 @@ export default function Members() {
     name: '', phone: '', room_id: '', joining_date: '', advance_paid: '', monthly_rent: ''
   });
 
-  // Mock data for UI demonstration
-  const [rooms] = useState([
-    { id: 1, room_number: '101' },
-    { id: 2, room_number: '102' }
-  ]);
+  const [rooms, setRooms] = useState([]);
 
   const fetchMembers = () => {
-    // Real implementation would fetch from PHP API
     setMembers([
       { id: 1, name: 'John Doe', phone: '1234567890', room_number: '101', joining_date: '2023-09-01', advance_paid: '5000', monthly_rent: '8000', status: 'Active' },
       { id: 2, name: 'Alex Smith', phone: '0987654321', room_number: '102', joining_date: '2023-09-02', advance_paid: '6000', monthly_rent: '8500', status: 'Active' },
+      { id: 3, name: 'David Lee', phone: '1122334455', room_number: '101', joining_date: '2023-10-15', advance_paid: '5000', monthly_rent: '8000', status: 'Active' },
+    ]);
+  };
+
+  const fetchRooms = () => {
+    setRooms([
+      { id: 1, room_number: '101' },
+      { id: 2, room_number: '102' },
+      { id: 3, room_number: '103' }
     ]);
   };
 
   useEffect(() => {
     fetchMembers();
+    fetchRooms();
   }, []);
 
   const handleAddMember = (e) => {
     e.preventDefault();
     setLoading(true);
-    // Real implementation would post to PHP
+    
     setTimeout(() => {
       setMembers([{ id: Date.now(), ...newMember, status: 'Active', room_number: rooms.find(r => r.id == newMember.room_id)?.room_number || 'N/A' }, ...members]);
       setNewMember({ name: '', phone: '', room_id: '', joining_date: '', advance_paid: '', monthly_rent: '' });
       setLoading(false);
     }, 500);
+  };
+
+  const handleVacate = (id) => {
+    setMembers(members.map(m => m.id === id ? { ...m, status: 'Vacated' } : m));
   };
 
   return (
@@ -104,6 +114,7 @@ export default function Members() {
                   <th className="p-4">Advance</th>
                   <th className="p-4">Joined</th>
                   <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -115,9 +126,25 @@ export default function Members() {
                     <td className="p-4">₹{member.advance_paid}</td>
                     <td className="p-4">{member.joining_date}</td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${member.status === 'Active' ? 'bg-green-500 text-dark-900' : 'bg-red-500 text-white'}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${member.status === 'Active' ? 'bg-green-500 text-dark-900' : 'bg-gray-600 text-gray-300'}`}>
                         {member.status}
                       </span>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button className="p-2 bg-dark-800 hover:bg-dark-700 text-gray-400 hover:text-white rounded-lg transition-colors border border-gray-700">
+                          <Edit2 size={16} />
+                        </button>
+                        {member.status === 'Active' && (
+                          <button 
+                            onClick={() => handleVacate(member.id)}
+                            className="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-colors border border-red-500/20"
+                            title="Vacate Room"
+                          >
+                            <LogOut size={16} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

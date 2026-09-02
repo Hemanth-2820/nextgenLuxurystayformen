@@ -8,21 +8,14 @@ export default function Rooms() {
   const [newRoom, setNewRoom] = useState({ room_number: '', capacity: '' });
   const [loading, setLoading] = useState(false);
 
-  // In a real scenario, this would fetch from the PHP API
-  const fetchRooms = async () => {
-    // try {
-    //   const res = await fetch(`${API_URL}/get_rooms.php`);
-    //   const data = await res.json();
-    //   if (data.status === 'success') setRooms(data.data);
-    // } catch (e) {
-    //   console.error("Failed to fetch rooms", e);
-    // }
-    
-    // Using mock data for UI design demonstration
+  // Using mock data for UI design demonstration
+  const fetchRooms = () => {
     setRooms([
-      { id: 1, room_number: '101', capacity: 2, current_occupancy: 1 },
-      { id: 2, room_number: '102', capacity: 3, current_occupancy: 3 },
+      { id: 1, room_number: '101', capacity: 2, current_occupancy: 2 },
+      { id: 2, room_number: '102', capacity: 3, current_occupancy: 1 },
       { id: 3, room_number: '103', capacity: 2, current_occupancy: 0 },
+      { id: 4, room_number: '104', capacity: 4, current_occupancy: 4 },
+      { id: 5, room_number: '105', capacity: 1, current_occupancy: 0 },
     ]);
   };
 
@@ -30,16 +23,10 @@ export default function Rooms() {
     fetchRooms();
   }, []);
 
-  const handleAddRoom = async (e) => {
+  const handleAddRoom = (e) => {
     e.preventDefault();
     setLoading(true);
-    // Real implementation would post to PHP
-    /*
-    await fetch(`${API_URL}/add_room.php`, {
-      method: 'POST',
-      body: JSON.stringify(newRoom)
-    });
-    */
+    
     setTimeout(() => {
       setRooms([...rooms, { id: Date.now(), ...newRoom, current_occupancy: 0 }]);
       setNewRoom({ room_number: '', capacity: '' });

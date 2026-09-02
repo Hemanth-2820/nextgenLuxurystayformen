@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { Home, Users, DoorOpen } from 'lucide-react';
+import { Home, Users, DoorOpen, IndianRupee, Receipt } from 'lucide-react';
 
 import Dashboard from './pages/Dashboard';
 import Rooms from './pages/Rooms';
 import Members from './pages/Members';
+import Payments from './pages/Payments';
+import Expenses from './pages/Expenses';
 
 function App() {
   return (
@@ -31,6 +33,14 @@ function App() {
               <Users size={20} />
               <span>Members</span>
             </Link>
+            <Link to="/payments" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-dark-900 hover:text-gold-500 transition-colors">
+              <IndianRupee size={20} />
+              <span>Payments</span>
+            </Link>
+            <Link to="/expenses" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-dark-900 hover:text-gold-500 transition-colors">
+              <Receipt size={20} />
+              <span>Expenses</span>
+            </Link>
           </nav>
         </aside>
 
@@ -41,6 +51,8 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/rooms" element={<Rooms />} />
               <Route path="/members" element={<Members />} />
+              <Route path="/payments" element={<Payments />} />
+              <Route path="/expenses" element={<Expenses />} />
             </Routes>
           </div>
         </main>
