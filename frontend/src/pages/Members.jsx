@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { filterByDateRange } from '../utils';
 
-const API_URL = 'http://localhost/backend';
+const API_URL = 'https://nextgen.nexlifly.in/backend/api.php';
 
 export default function Members() {
   const [members, setMembers] = useState([]);
@@ -16,28 +16,17 @@ export default function Members() {
   const [damages, setDamages] = useState(0);
 
   const fetchMembers = () => {
-    setMembers([
-      { id: 1, name: 'John Doe', email: 'john@example.com', phone: '1234567890', room_number: '101', bed_name: 'Bed A', joining_date: '2023-09-01', advance_paid: '5000', monthly_rent: '8000', status: 'Active', kyc: 'Verified' },
-      { id: 2, name: 'Alex Smith', email: 'alex@example.com', phone: '0987654321', room_number: '102', bed_name: 'Bed A', joining_date: '2023-09-02', advance_paid: '6000', monthly_rent: '8500', status: 'Active', kyc: 'Verified' },
-      { id: 3, name: 'David Lee', email: 'david@example.com', phone: '1122334455', room_number: '101', bed_name: 'Bed B', joining_date: '2023-10-15', advance_paid: '5000', monthly_rent: '8000', status: 'Active', kyc: 'Pending' },
-    ]);
+    fetch(`${API_URL}?action=get_members`)
+      .then(res => res.json())
+      .then(data => setMembers(data))
+      .catch(err => console.error(err));
   };
 
   const fetchRooms = () => {
-    const savedRooms = localStorage.getItem('rooms');
-    if (savedRooms) {
-      setRooms(JSON.parse(savedRooms));
-    } else {
-      const defaultRooms = [
-        { id: 1, room_number: '101', capacity: 2, current_occupancy: 2, beds: [{id: '101-A', name: 'Bed A', occupied: true}, {id: '101-B', name: 'Bed B', occupied: true}], inventory: { bed: true, ac: true, geyser: true, tv: false } },
-        { id: 2, room_number: '102', capacity: 3, current_occupancy: 1, beds: [{id: '102-A', name: 'Bed A', occupied: true}, {id: '102-B', name: 'Bed B', occupied: false}, {id: '102-C', name: 'Bed C', occupied: false}], inventory: { bed: true, ac: false, geyser: true, tv: false } },
-        { id: 3, room_number: '103', capacity: 2, current_occupancy: 0, beds: [{id: '103-A', name: 'Bed A', occupied: false}, {id: '103-B', name: 'Bed B', occupied: false}], inventory: { bed: true, ac: true, geyser: true, tv: true } },
-        { id: 4, room_number: '104', capacity: 4, current_occupancy: 4, beds: [{id: '104-A', name: 'Bed A', occupied: true}, {id: '104-B', name: 'Bed B', occupied: true}, {id: '104-C', name: 'Bed C', occupied: true}, {id: '104-D', name: 'Bed D', occupied: true}], inventory: { bed: true, ac: false, geyser: false, tv: false } },
-        { id: 5, room_number: '105', capacity: 1, current_occupancy: 0, beds: [{id: '105-A', name: 'Bed A', occupied: false}], inventory: { bed: true, ac: true, geyser: true, tv: true } },
-      ];
-      setRooms(defaultRooms);
-      localStorage.setItem('rooms', JSON.stringify(defaultRooms));
-    }
+    fetch(`${API_URL}?action=get_rooms`)
+      .then(res => res.json())
+      .then(data => setRooms(data))
+      .catch(err => console.error(err));
   };
 
   useEffect(() => {
@@ -45,60 +34,95 @@ export default function Members() {
     fetchRooms();
   }, []);
 
-  const handleAddMember = (e) => {
+  const handleAddMember = async (e) => {
     e.preventDefault();
     setLoading(true);
     
-    setTimeout(() => {
-      const selectedRoom = rooms.find(r => r.id == newMember.room_id);
-      const selectedBed = selectedRoom?.beds?.find(b => b.id == newMember.bed_id);
-      
-      setMembers([{ 
-        id: Date.now(), 
-        ...newMember, 
-        status: 'Active', 
-        room_number: selectedRoom?.room_number || 'N/A', 
-        bed_name: selectedBed?.name || 'N/A',
-        kyc: idProof ? 'Verified' : 'Pending' 
-      }, ...members]);
-      
-      const updatedRooms = rooms.map(room => {
-        if (room.id == newMember.room_id) {
-          const newBeds = room.beds.map(bed => {
-            if (bed.id == newMember.bed_id) return { ...bed, occupied: true };
-            return bed;
-          });
-          return { ...room, current_occupancy: parseInt(room.current_occupancy || 0) + 1, beds: newBeds };
+    const selectedRoom = rooms.find(r => r.id == newMember.room_id);
+    const selectedBed = selectedRoom?.beds?.find(b => b.id == newMember.bed_id);
+    
+    // 1. Generate Beautiful PDF Receipt
+    const doc = new jsPDF();
+    doc.setFontSize(22);
+    doc.setTextColor(212, 175, 55); // Gold
+    doc.text("NextGen Luxury Stay", 105, 20, null, null, "center");
+    
+    doc.setFontSize(16);
+    doc.setTextColor(50);
+    doc.text("Admission & Payment Receipt", 105, 30, null, null, "center");
+    
+    doc.setDrawColor(212, 175, 55);
+    doc.line(20, 35, 190, 35);
+    
+    doc.setTextColor(0);
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 50);
+    doc.text(`Member Name: ${newMember.name}`, 20, 65);
+    doc.text(`Phone: ${newMember.phone}`, 20, 75);
+    doc.text(`Email: ${newMember.email}`, 20, 85);
+    
+    doc.text(`Room Number: ${selectedRoom?.room_number || 'N/A'}`, 120, 65);
+    doc.text(`Bed Allocated: ${selectedBed?.name || 'N/A'}`, 120, 75);
+    doc.text(`Joining Date: ${newMember.joining_date}`, 120, 85);
+    
+    doc.line(20, 95, 190, 95);
+    
+    doc.text(`Monthly Rent: Rs. ${newMember.monthly_rent}`, 20, 110);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Advance Paid: Rs. ${newMember.advance_paid}`, 20, 120);
+    doc.setFont(undefined, 'normal');
+
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text("This is a computer-generated receipt and requires no physical signature.", 105, 280, null, null, "center");
+
+    // 2. Convert PDF to Base64 String
+    const pdfBase64 = doc.output('datauristring');
+    
+    // 3. Send to PHP Backend
+    const payload = {
+        ...newMember,
+        pdf_base64: pdfBase64
+    };
+
+    try {
+        const response = await fetch(`${API_URL}?action=add_member`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            setNewMember({ name: '', email: '', phone: '', room_id: '', bed_id: '', joining_date: '', advance_paid: '', monthly_rent: '' });
+            setIdProof(null);
+            fetchMembers();
+            fetchRooms();
         }
-        return room;
-      });
-      setRooms(updatedRooms);
-      localStorage.setItem('rooms', JSON.stringify(updatedRooms));
-      
-      setNewMember({ name: '', email: '', phone: '', room_id: '', bed_id: '', joining_date: '', advance_paid: '', monthly_rent: '' });
-      setIdProof(null);
-      setLoading(false);
-    }, 500);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        setLoading(false);
+    }
   };
 
-  const handleVacateConfirm = () => {
-    setMembers(members.map(m => m.id === vacatingMember.id ? { ...m, status: 'Vacated' } : m));
-    
-    const updatedRooms = rooms.map(room => {
-      if (room.room_number === vacatingMember.room_number) {
-        const newBeds = room.beds.map(bed => {
-          if (bed.name === vacatingMember.bed_name) return { ...bed, occupied: false };
-          return bed;
-        });
-        return { ...room, current_occupancy: Math.max(0, parseInt(room.current_occupancy || 1) - 1), beds: newBeds };
+  const handleVacateConfirm = async () => {
+    try {
+      const response = await fetch(`${API_URL}?action=vacate_member`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ member_id: vacatingMember.id })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setVacatingMember(null);
+        setDamages(0);
+        fetchMembers();
+        fetchRooms();
       }
-      return room;
-    });
-    setRooms(updatedRooms);
-    localStorage.setItem('rooms', JSON.stringify(updatedRooms));
-    
-    setVacatingMember(null);
-    setDamages(0);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const [filterRange, setFilterRange] = useState('All Time');

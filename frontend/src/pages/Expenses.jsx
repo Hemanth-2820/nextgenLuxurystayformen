@@ -1,34 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { filterByDateRange } from '../utils';
 
+const API_URL = 'https://nextgen.nexlifly.in/backend/api.php';
+
 export default function Expenses() {
-  const [expenses, setExpenses] = useState([
-    { id: 1, title: 'Electricity Bill', amount: 4500, date: '2023-10-01', category: 'Utilities' },
-    { id: 2, title: 'Cleaning Supplies', amount: 1200, date: '2023-10-05', category: 'Maintenance' },
-  ]);
+  const [expenses, setExpenses] = useState([]);
+
+  const fetchExpenses = () => {
+    fetch(`${API_URL}?action=get_expenses`)
+      .then(res => res.json())
+      .then(data => setExpenses(data))
+      .catch(err => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
 
   const [newExpense, setNewExpense] = useState({ title: '', amount: '', date: '', category: 'Utilities', customCategory: '' });
 
-  const handleAddExpense = (e) => {
+  const handleAddExpense = async (e) => {
     e.preventDefault();
     const finalCategory = newExpense.category === 'Other' && newExpense.customCategory 
       ? newExpense.customCategory 
       : newExpense.category;
       
-    setExpenses([{ id: Date.now(), title: newExpense.title, amount: Number(newExpense.amount), date: newExpense.date, category: finalCategory }, ...expenses]);
-    setNewExpense({ title: '', amount: '', date: '', category: 'Utilities', customCategory: '' });
+    try {
+        const response = await fetch(`${API_URL}?action=add_expense`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                title: newExpense.title, 
+                amount: Number(newExpense.amount), 
+                expense_date: newExpense.date, 
+                category: finalCategory 
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            setNewExpense({ title: '', amount: '', date: '', category: 'Utilities', customCategory: '' });
+            fetchExpenses();
+        }
+    } catch (err) {
+        console.error(err);
+    }
   };
 
   const [filterRange, setFilterRange] = useState('All Time');
 
   const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
 
-  const filteredExpenses = expenses.filter(exp => filterByDateRange(exp.date, filterRange));
+  const filteredExpenses = expenses.filter(exp => filterByDateRange(exp.expense_date, filterRange));
 
-  const totalFilteredExpenses = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalFilteredExpenses = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -41,7 +68,7 @@ export default function Expenses() {
     doc.text(`Expenses Report (${filterRange})`, 14, 30);
     
     const headers = [['Date', 'Title', 'Category', 'Amount']];
-    const data = filteredExpenses.map(exp => [exp.date, exp.title, exp.category, `Rs.${exp.amount}`]);
+    const data = filteredExpenses.map(exp => [exp.expense_date, exp.title, exp.category, `Rs.${exp.amount}`]);
     
     autoTable(doc, {
       startY: 40,

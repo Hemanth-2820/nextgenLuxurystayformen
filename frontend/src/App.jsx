@@ -32,8 +32,7 @@ function App() {
         {/* Mobile Header */}
         <div className="md:hidden flex-none p-4 flex justify-between items-center bg-dark-800 z-40 border-b border-gray-700">
           <div>
-            <h1 className="text-xl font-bold text-gold-500 uppercase tracking-widest">NextGen</h1>
-            <p className="text-[10px] text-gray-400">Luxury Stay For Men</p>
+            <img src="/logo.png" alt="NextGen Luxury Stay" className="h-14 md:h-16 object-contain" />
           </div>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-gray-400 hover:text-white transition-colors">
             {isSidebarOpen ? <X size={28} /> : <Menu size={28} />}
@@ -50,9 +49,8 @@ function App() {
 
         {/* Sidebar Navigation */}
         <aside className={`fixed md:relative z-40 inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 w-64 glass-panel md:m-4 flex flex-col transition-transform duration-300 ease-in-out`}>
-          <div className="p-6 hidden md:block">
-            <h1 className="text-xl font-bold text-gold-500 uppercase tracking-widest">NextGen</h1>
-            <p className="text-xs text-gray-400 mt-1">Luxury Stay For Men</p>
+          <div className="p-6 hidden md:flex items-center justify-center">
+            <img src="/logo.png" alt="NextGen Luxury Stay" className="w-11/12 max-h-32 object-contain drop-shadow-xl" />
           </div>
           
           <nav className="flex-1 px-4 mt-6 md:mt-2 space-y-2 overflow-y-auto">

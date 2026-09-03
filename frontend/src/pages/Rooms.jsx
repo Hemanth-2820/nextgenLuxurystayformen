@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bed, Wind, Droplets, Tv, DoorOpen, Edit2, X } from 'lucide-react';
 
-// You will change this to your BigRock URL later (e.g., 'https://api.yourdomain.com')
-const API_URL = 'http://localhost/backend'; 
+const API_URL = 'https://nextgen.nexlifly.in/backend/api.php';
 
 export default function Rooms() {
   const [rooms, setRooms] = useState([]);
@@ -11,46 +10,36 @@ export default function Rooms() {
   const [editingRoom, setEditingRoom] = useState(null);
 
   const fetchRooms = () => {
-    const savedRooms = localStorage.getItem('rooms');
-    if (savedRooms) {
-      setRooms(JSON.parse(savedRooms));
-    } else {
-      const defaultRooms = [
-        { id: 1, room_number: '101', capacity: 2, current_occupancy: 2, beds: [{id: '101-A', name: 'Bed A', occupied: true}, {id: '101-B', name: 'Bed B', occupied: true}], inventory: { bed: true, ac: true, geyser: true, tv: false } },
-        { id: 2, room_number: '102', capacity: 3, current_occupancy: 1, beds: [{id: '102-A', name: 'Bed A', occupied: true}, {id: '102-B', name: 'Bed B', occupied: false}, {id: '102-C', name: 'Bed C', occupied: false}], inventory: { bed: true, ac: false, geyser: true, tv: false } },
-        { id: 3, room_number: '103', capacity: 2, current_occupancy: 0, beds: [{id: '103-A', name: 'Bed A', occupied: false}, {id: '103-B', name: 'Bed B', occupied: false}], inventory: { bed: true, ac: true, geyser: true, tv: true } },
-        { id: 4, room_number: '104', capacity: 4, current_occupancy: 4, beds: [{id: '104-A', name: 'Bed A', occupied: true}, {id: '104-B', name: 'Bed B', occupied: true}, {id: '104-C', name: 'Bed C', occupied: true}, {id: '104-D', name: 'Bed D', occupied: true}], inventory: { bed: true, ac: false, geyser: false, tv: false } },
-        { id: 5, room_number: '105', capacity: 1, current_occupancy: 0, beds: [{id: '105-A', name: 'Bed A', occupied: false}], inventory: { bed: true, ac: true, geyser: true, tv: true } },
-      ];
-      setRooms(defaultRooms);
-      localStorage.setItem('rooms', JSON.stringify(defaultRooms));
-    }
+    fetch(`${API_URL}?action=get_rooms`)
+      .then(res => res.json())
+      .then(data => setRooms(data))
+      .catch(err => console.error(err));
   };
 
   useEffect(() => {
     fetchRooms();
   }, []);
 
-  useEffect(() => {
-    if (rooms.length > 0) {
-      localStorage.setItem('rooms', JSON.stringify(rooms));
-    }
-  }, [rooms]);
-
-  const handleAddRoom = (e) => {
+  const handleAddRoom = async (e) => {
     e.preventDefault();
     setLoading(true);
     
-    setTimeout(() => {
-      const generatedBeds = [];
-      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      for(let i=0; i<newRoom.capacity; i++) {
-        generatedBeds.push({ id: `${newRoom.room_number}-${alphabet[i]}`, name: `Bed ${alphabet[i]}`, occupied: false });
-      }
-      setRooms([...rooms, { id: Date.now(), room_number: newRoom.room_number, capacity: newRoom.capacity, inventory: newRoom.inventory, current_occupancy: 0, beds: generatedBeds }]);
-      setNewRoom({ room_number: '', capacity: '', inventory: { bed: true, ac: false, geyser: false, tv: false } });
-      setLoading(false);
-    }, 500);
+    try {
+        const response = await fetch(`${API_URL}?action=add_room`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room_number: newRoom.room_number, capacity: newRoom.capacity })
+        });
+        const data = await response.json();
+        if (data.success) {
+            setNewRoom({ room_number: '', capacity: '', inventory: { bed: true, ac: false, geyser: false, tv: false } });
+            fetchRooms();
+        }
+    } catch (err) {
+        console.error(err);
+    } finally {
+        setLoading(false);
+    }
   };
 
   const handleEditSubmit = (e) => {

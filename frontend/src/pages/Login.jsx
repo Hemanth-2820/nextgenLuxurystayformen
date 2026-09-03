@@ -15,12 +15,8 @@ export default function Login({ onLogin }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark-900 px-4">
       <div className="max-w-md w-full glass-panel p-8 rounded-2xl border border-gray-700 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-dark-800 border border-gold-500/30 mb-4 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
-            <Lock size={32} className="text-gold-500" />
-          </div>
-          <h1 className="text-3xl font-bold text-gold-500 tracking-widest uppercase">NextGen</h1>
-          <p className="text-gray-400 mt-2 text-sm">Luxury Stay For Men</p>
+        <div className="text-center mb-10 flex flex-col items-center">
+          <img src="/logo.png" alt="NextGen Luxury Stay" className="h-32 md:h-40 object-contain mb-2 drop-shadow-2xl" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

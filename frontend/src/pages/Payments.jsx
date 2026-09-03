@@ -3,30 +3,37 @@ import { IndianRupee, CheckCircle2, Mail, Download, FileText } from 'lucide-reac
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { filterByDateRange } from '../utils';
+const API_URL = 'https://nextgen.nexlifly.in/backend/api.php';
 
 export default function Payments() {
   const [payments, setPayments] = useState([]);
   
+  const fetchPayments = () => {
+    fetch(`${API_URL}?action=get_payments`)
+      .then(res => res.json())
+      .then(data => setPayments(data))
+      .catch(err => console.error(err));
+  };
+
   useEffect(() => {
-    const savedPayments = localStorage.getItem('payments');
-    if (savedPayments) {
-      setPayments(JSON.parse(savedPayments));
-    } else {
-      const defaultPayments = [
-        { id: 1, name: 'John Doe', email: 'john@example.com', room: '101', rent: 8000, status: 'Pending', date: '2026-08-01' },
-        { id: 2, name: 'Alex Smith', email: 'alex@example.com', room: '102', rent: 8500, status: 'Paid', date: '2026-08-05' },
-        { id: 3, name: 'David Lee', email: 'david@example.com', room: '101', rent: 8000, status: 'Pending', date: '2026-09-01' },
-      ];
-      setPayments(defaultPayments);
-      localStorage.setItem('payments', JSON.stringify(defaultPayments));
-    }
+    fetchPayments();
   }, []);
   const [filterRange, setFilterRange] = useState('All Time');
 
-  const handleCollect = (id) => {
-    const updatedPayments = payments.map(p => p.id === id ? { ...p, status: 'Paid' } : p);
-    setPayments(updatedPayments);
-    localStorage.setItem('payments', JSON.stringify(updatedPayments));
+  const handleCollect = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}?action=collect_rent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_id: id })
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchPayments();
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleEmailReminder = (email, name, rent) => {
@@ -41,7 +48,7 @@ export default function Payments() {
 
   const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
 
-  const filteredPayments = payments.filter(p => filterByDateRange(p.date, filterRange));
+  const filteredPayments = payments.filter(p => filterByDateRange(p.payment_date, filterRange));
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -54,7 +61,7 @@ export default function Payments() {
     doc.text(`Rent Payments Report (${filterRange})`, 14, 30);
     
     const headers = [['Date', 'Member Name', 'Room', 'Rent Amount', 'Status']];
-    const data = filteredPayments.map(p => [p.date, p.name, p.room, `Rs.${p.rent}`, p.status]);
+    const data = filteredPayments.map(p => [p.payment_date, p.name, p.room_number, `Rs.${p.amount}`, p.status]);
     
     autoTable(doc, {
       startY: 40,
@@ -107,10 +114,10 @@ export default function Payments() {
           <tbody>
             {filteredPayments.map(payment => (
               <tr key={payment.id} className="border-b border-gray-800 hover:bg-dark-800 transition-colors">
-                <td className="p-4 text-gray-400">{payment.date}</td>
+                <td className="p-4 text-gray-400">{payment.payment_date}</td>
                 <td className="p-4 font-bold text-white">{payment.name}</td>
-                <td className="p-4 text-gray-300">Room {payment.room}</td>
-                <td className="p-4 text-gray-300">₹{payment.rent}</td>
+                <td className="p-4 text-gray-300">Room {payment.room_number || 'N/A'}</td>
+                <td className="p-4 text-gray-300">₹{payment.amount}</td>
                 <td className="p-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${payment.status === 'Paid' ? 'bg-green-500 text-dark-900' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
                     {payment.status}
@@ -120,7 +127,7 @@ export default function Payments() {
                   {payment.status === 'Pending' ? (
                     <div className="flex justify-end items-center gap-2">
                       <button 
-                        onClick={() => handleEmailReminder(payment.email, payment.name, payment.rent)}
+                        onClick={() => handleEmailReminder(payment.email, payment.name, payment.amount)}
                         className="bg-dark-800 hover:bg-dark-700 text-gray-400 hover:text-white text-sm py-2 px-3 rounded-lg transition-all duration-300 border border-gray-700"
                         title="Send Email Reminder"
                       >

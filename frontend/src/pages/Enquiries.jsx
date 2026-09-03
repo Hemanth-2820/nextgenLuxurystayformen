@@ -1,36 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PhoneCall, CheckCircle2, XCircle, FileText, Trash2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { filterByDateRange } from '../utils';
 
+const API_URL = 'https://nextgen.nexlifly.in/backend/api.php';
+
 export default function Enquiries() {
-  const [enquiries, setEnquiries] = useState([
-    { id: 1, name: 'Ravi Kumar', phone: '9876543210', date: '2023-11-01', followup: '2023-11-05', status: 'Follow Up' },
-    { id: 2, name: 'Sunil Sharma', phone: '8765432109', date: '2023-11-02', followup: '2023-11-03', status: 'Joined' },
-    { id: 3, name: 'Amit Singh', phone: '7654321098', date: '2023-10-25', followup: '2023-10-30', status: 'Not Interested' },
-  ]);
+  const [enquiries, setEnquiries] = useState([]);
+
+  const fetchEnquiries = () => {
+    fetch(`${API_URL}?action=get_enquiries`)
+      .then(res => res.json())
+      .then(data => setEnquiries(data))
+      .catch(err => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchEnquiries();
+  }, []);
 
   const [newEnquiry, setNewEnquiry] = useState({ name: '', phone: '', followup: '' });
 
-  const handleAddEnquiry = (e) => {
+  const handleAddEnquiry = async (e) => {
     e.preventDefault();
-    setEnquiries([{ id: Date.now(), ...newEnquiry, date: new Date().toISOString().split('T')[0], status: 'Follow Up' }, ...enquiries]);
-    setNewEnquiry({ name: '', phone: '', followup: '' });
+    try {
+        const response = await fetch(`${API_URL}?action=add_enquiry`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                name: newEnquiry.name, 
+                phone: newEnquiry.phone, 
+                follow_up_date: newEnquiry.followup 
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            setNewEnquiry({ name: '', phone: '', followup: '' });
+            fetchEnquiries();
+        }
+    } catch (err) {
+        console.error(err);
+    }
   };
 
-  const updateStatus = (id, newStatus) => {
-    setEnquiries(enquiries.map(e => e.id === id ? { ...e, status: newStatus } : e));
-  };
-
-  const handleDelete = (id) => {
-    setEnquiries(enquiries.filter(e => e.id !== id));
+  const updateStatus = async (id, newStatus) => {
+    try {
+        const response = await fetch(`${API_URL}?action=update_enquiry_status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enquiry_id: id, status: newStatus })
+        });
+        const data = await response.json();
+        if (data.success) {
+            fetchEnquiries();
+        }
+    } catch (err) {
+        console.error(err);
+    }
   };
 
   const [filterRange, setFilterRange] = useState('All Time');
   const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
 
-  const filteredEnquiries = enquiries.filter(e => filterByDateRange(e.date, filterRange));
+  const filteredEnquiries = enquiries.filter(e => filterByDateRange(e.created_at, filterRange));
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -43,7 +76,7 @@ export default function Enquiries() {
     doc.text(`Enquiries Report (${filterRange})`, 14, 30);
     
     const headers = [['Date', 'Name', 'Phone', 'Follow Up', 'Status']];
-    const data = filteredEnquiries.map(e => [e.date, e.name, e.phone, e.followup, e.status]);
+    const data = filteredEnquiries.map(e => [e.created_at, e.name, e.phone, e.follow_up_date, e.status]);
     
     autoTable(doc, {
       startY: 40,
@@ -132,8 +165,8 @@ export default function Enquiries() {
                       <div className="text-sm text-gray-400">{enq.phone}</div>
                     </td>
                     <td className="p-4">
-                      <div className="text-xs text-gray-400">Enquired: {enq.date}</div>
-                      <div className="text-sm font-bold text-gray-300">Follow up: {enq.followup}</div>
+                      <div className="text-xs text-gray-400">Enquired: {enq.created_at}</div>
+                      <div className="text-sm font-bold text-gray-300">Follow up: {enq.follow_up_date}</div>
                     </td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold 

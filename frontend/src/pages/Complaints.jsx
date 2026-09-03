@@ -4,33 +4,75 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { filterByDateRange } from '../utils';
 
+const API_URL = 'https://nextgen.nexlifly.in/backend/api.php';
+
 export default function Complaints() {
-  const [complaints, setComplaints] = useState([
-    { id: 1, title: 'AC not cooling', room: '102', date: '2023-10-10', status: 'Pending' },
-    { id: 2, title: 'Geyser broken', room: '104', date: '2023-10-11', status: 'Pending' },
-    { id: 3, title: 'Wi-Fi keeps dropping', room: '101', date: '2023-10-09', status: 'Resolved' },
-  ]);
+  const [complaints, setComplaints] = useState([]);
+  const [members, setMembers] = useState([]);
 
-  const [newComplaint, setNewComplaint] = useState({ title: '', room: '', date: '' });
+  const fetchComplaints = () => {
+    fetch(`${API_URL}?action=get_complaints`)
+      .then(res => res.json())
+      .then(data => setComplaints(data))
+      .catch(err => console.error(err));
+  };
 
-  const handleAddComplaint = (e) => {
+  const fetchMembers = () => {
+    fetch(`${API_URL}?action=get_members`)
+      .then(res => res.json())
+      .then(data => setMembers(data))
+      .catch(err => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchComplaints();
+    fetchMembers();
+  }, []);
+
+  const [newComplaint, setNewComplaint] = useState({ title: '', member_id: '', date: '' });
+
+  const handleAddComplaint = async (e) => {
     e.preventDefault();
-    setComplaints([{ id: Date.now(), ...newComplaint, status: 'Pending' }, ...complaints]);
-    setNewComplaint({ title: '', room: '', date: '' });
+    try {
+        const response = await fetch(`${API_URL}?action=add_complaint`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                member_id: newComplaint.member_id, 
+                complaint_text: newComplaint.title, 
+                created_date: newComplaint.date 
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            setNewComplaint({ title: '', member_id: '', date: '' });
+            fetchComplaints();
+        }
+    } catch (err) {
+        console.error(err);
+    }
   };
 
-  const handleResolve = (id) => {
-    setComplaints(complaints.map(c => c.id === id ? { ...c, status: 'Resolved' } : c));
-  };
-
-  const handleDelete = (id) => {
-    setComplaints(complaints.filter(c => c.id !== id));
+  const handleResolve = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}?action=resolve_complaint`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ complaint_id: id })
+        });
+        const data = await response.json();
+        if (data.success) {
+            fetchComplaints();
+        }
+    } catch (err) {
+        console.error(err);
+    }
   };
 
   const [filterRange, setFilterRange] = useState('All Time');
   const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
 
-  const filteredComplaints = complaints.filter(c => filterByDateRange(c.date, filterRange));
+  const filteredComplaints = complaints.filter(c => filterByDateRange(c.created_date, filterRange));
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -43,7 +85,7 @@ export default function Complaints() {
     doc.text(`Complaints Report (${filterRange})`, 14, 30);
     
     const headers = [['Date', 'Room', 'Issue', 'Status']];
-    const data = filteredComplaints.map(c => [c.date, `Room ${c.room}`, c.title, c.status]);
+    const data = filteredComplaints.map(c => [c.created_date, `Room ${c.room_number || 'N/A'}`, c.complaint_text, c.status]);
     
     autoTable(doc, {
       startY: 40,
@@ -94,9 +136,14 @@ export default function Complaints() {
                   value={newComplaint.title} onChange={e => setNewComplaint({...newComplaint, title: e.target.value})} placeholder="e.g. AC not cooling" />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Room Number</label>
-                <input type="text" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
-                  value={newComplaint.room} onChange={e => setNewComplaint({...newComplaint, room: e.target.value})} placeholder="101" />
+                <label className="block text-sm text-gray-400 mb-1">Select Member</label>
+                <select required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                  value={newComplaint.member_id} onChange={e => setNewComplaint({...newComplaint, member_id: e.target.value})}>
+                  <option value="">-- Choose Member --</option>
+                  {members.map(m => (
+                    <option key={m.id} value={m.id}>{m.name} (Room {m.room_number})</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Date Reported</label>
@@ -128,9 +175,9 @@ export default function Complaints() {
                   <tr><td colSpan="5" className="p-8 text-center text-gray-400">No complaints found for this time range.</td></tr>
                 ) : filteredComplaints.map(complaint => (
                   <tr key={complaint.id} className="border-b border-gray-800 hover:bg-dark-800 transition-colors">
-                    <td className="p-4 text-gray-400 text-sm">{complaint.date}</td>
-                    <td className="p-4 font-bold text-white">Room {complaint.room}</td>
-                    <td className="p-4 text-gray-300">{complaint.title}</td>
+                    <td className="p-4 text-gray-400 text-sm">{complaint.created_date}</td>
+                    <td className="p-4 font-bold text-white">Room {complaint.room_number || 'N/A'}<br/><span className="text-xs text-gray-400">{complaint.member_name}</span></td>
+                    <td className="p-4 text-gray-300">{complaint.complaint_text}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${complaint.status === 'Resolved' ? 'bg-green-500 text-dark-900' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'}`}>
                         {complaint.status}
