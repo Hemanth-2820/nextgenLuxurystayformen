@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IndianRupee, CheckCircle2, Mail, Download } from 'lucide-react';
 
 export default function Payments() {
@@ -23,9 +23,9 @@ export default function Payments() {
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gold-500 mb-6 flex items-center gap-3">
-        <IndianRupee size={32} /> Rent Collection
+    <div className="p-4 md:p-8">
+      <h1 className="text-2xl md:text-3xl font-bold text-gold-500 mb-6 flex items-center gap-3">
+        <IndianRupee size={32} className="hidden md:block" /> Rent Collection
       </h1>
 
       <div className="bg-dark-900 rounded-xl border border-gray-700 overflow-auto max-h-[calc(100vh-150px)]">

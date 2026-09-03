@@ -18,10 +18,10 @@ export default function Expenses() {
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gold-500 flex items-center gap-3">
-          <Receipt size={32} /> Expenses Tracking
+        <h1 className="text-2xl md:text-3xl font-bold text-gold-500 flex items-center gap-3">
+          <Receipt size={32} className="hidden md:block" /> Expense Tracker
         </h1>
         <div className="bg-dark-900 px-6 py-3 rounded-xl border border-gray-700 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
           <p className="text-gray-400 text-sm font-semibold uppercase">Total Expenses</p>

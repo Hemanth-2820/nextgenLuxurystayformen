@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquareWarning, CheckCircle2, Plus } from 'lucide-react';
 
 export default function Complaints() {
@@ -21,9 +21,9 @@ export default function Complaints() {
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gold-500 mb-6 flex items-center gap-3">
-        <MessageSquareWarning size={32} /> Maintenance Tracker
+    <div className="p-4 md:p-8">
+      <h1 className="text-2xl md:text-3xl font-bold text-gold-500 mb-6 flex items-center gap-3">
+        <MessageSquareWarning size={32} className="hidden md:block" /> Complaints & Issues
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

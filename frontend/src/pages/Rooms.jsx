@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bed, Wind, Droplets, Tv } from 'lucide-react';
+import { Bed, Wind, Droplets, Tv, DoorOpen } from 'lucide-react';
 
 // You will change this to your BigRock URL later (e.g., 'https://api.yourdomain.com')
 const API_URL = 'http://localhost/backend'; 
@@ -11,11 +11,11 @@ export default function Rooms() {
 
   const fetchRooms = () => {
     setRooms([
-      { id: 1, room_number: '101', capacity: 2, current_occupancy: 2, inventory: { bed: true, ac: true, geyser: true, tv: false } },
-      { id: 2, room_number: '102', capacity: 3, current_occupancy: 1, inventory: { bed: true, ac: false, geyser: true, tv: false } },
-      { id: 3, room_number: '103', capacity: 2, current_occupancy: 0, inventory: { bed: true, ac: true, geyser: true, tv: true } },
-      { id: 4, room_number: '104', capacity: 4, current_occupancy: 4, inventory: { bed: true, ac: false, geyser: false, tv: false } },
-      { id: 5, room_number: '105', capacity: 1, current_occupancy: 0, inventory: { bed: true, ac: true, geyser: true, tv: true } },
+      { id: 1, room_number: '101', capacity: 2, current_occupancy: 2, beds: [{id: '101-A', name: 'Bed A', occupied: true}, {id: '101-B', name: 'Bed B', occupied: true}], inventory: { bed: true, ac: true, geyser: true, tv: false } },
+      { id: 2, room_number: '102', capacity: 3, current_occupancy: 1, beds: [{id: '102-A', name: 'Bed A', occupied: true}, {id: '102-B', name: 'Bed B', occupied: false}, {id: '102-C', name: 'Bed C', occupied: false}], inventory: { bed: true, ac: false, geyser: true, tv: false } },
+      { id: 3, room_number: '103', capacity: 2, current_occupancy: 0, beds: [{id: '103-A', name: 'Bed A', occupied: false}, {id: '103-B', name: 'Bed B', occupied: false}], inventory: { bed: true, ac: true, geyser: true, tv: true } },
+      { id: 4, room_number: '104', capacity: 4, current_occupancy: 4, beds: [{id: '104-A', name: 'Bed A', occupied: true}, {id: '104-B', name: 'Bed B', occupied: true}, {id: '104-C', name: 'Bed C', occupied: true}, {id: '104-D', name: 'Bed D', occupied: true}], inventory: { bed: true, ac: false, geyser: false, tv: false } },
+      { id: 5, room_number: '105', capacity: 1, current_occupancy: 0, beds: [{id: '105-A', name: 'Bed A', occupied: false}], inventory: { bed: true, ac: true, geyser: true, tv: true } },
     ]);
   };
 
@@ -28,15 +28,22 @@ export default function Rooms() {
     setLoading(true);
     
     setTimeout(() => {
-      setRooms([...rooms, { id: Date.now(), room_number: newRoom.room_number, capacity: newRoom.capacity, inventory: newRoom.inventory, current_occupancy: 0 }]);
+      const generatedBeds = [];
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      for(let i=0; i<newRoom.capacity; i++) {
+        generatedBeds.push({ id: `${newRoom.room_number}-${alphabet[i]}`, name: `Bed ${alphabet[i]}`, occupied: false });
+      }
+      setRooms([...rooms, { id: Date.now(), room_number: newRoom.room_number, capacity: newRoom.capacity, inventory: newRoom.inventory, current_occupancy: 0, beds: generatedBeds }]);
       setNewRoom({ room_number: '', capacity: '', inventory: { bed: true, ac: false, geyser: false, tv: false } });
       setLoading(false);
     }, 500);
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gold-500 mb-6">Room Management</h1>
+    <div className="p-4 md:p-8">
+      <h1 className="text-2xl md:text-3xl font-bold text-gold-500 mb-6 flex items-center gap-3">
+        <DoorOpen size={32} className="hidden md:block" /> Room Inventory 
+      </h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
