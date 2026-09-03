@@ -69,6 +69,20 @@ export default function Complaints() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if(window.confirm("Are you sure you want to permanently delete this complaint?")) {
+      try {
+        const response = await fetch(`${API_URL}?action=delete_complaint`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ complaint_id: id })
+        });
+        const data = await response.json();
+        if (data.success) fetchComplaints();
+      } catch (err) { console.error(err); }
+    }
+  };
+
   const [filterRange, setFilterRange] = useState('All Time');
   const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
 
@@ -131,19 +145,26 @@ export default function Complaints() {
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Plus size={20} className="text-gold-500" /> Log Complaint</h2>
             <form onSubmit={handleAddComplaint} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Issue Description</label>
+                <label className="block text-sm text-gray-400 mb-1">Issue</label>
                 <input type="text" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
                   value={newComplaint.title} onChange={e => setNewComplaint({...newComplaint, title: e.target.value})} placeholder="e.g. AC not cooling" />
               </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Select Member</label>
-                <select required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
-                  value={newComplaint.member_id} onChange={e => setNewComplaint({...newComplaint, member_id: e.target.value})}>
-                  <option value="">-- Choose Member --</option>
-                  {members.map(m => (
-                    <option key={m.id} value={m.id}>{m.name} (Room {m.room_number})</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Select Member</label>
+                  <select required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                    value={newComplaint.member_id} onChange={e => setNewComplaint({...newComplaint, member_id: e.target.value})}>
+                    <option value="">-- Choose --</option>
+                    {members.map(m => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Room No</label>
+                  <input type="text" readOnly className="w-full bg-dark-800/50 border border-gray-700 rounded-lg p-2 focus:outline-none text-gray-400 cursor-not-allowed"
+                    value={newComplaint.member_id ? members.find(m => m.id == newComplaint.member_id)?.room_number || 'N/A' : ''} placeholder="Auto-filled" />
+                </div>
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Date Reported</label>

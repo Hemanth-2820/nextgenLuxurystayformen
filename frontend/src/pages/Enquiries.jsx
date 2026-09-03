@@ -60,6 +60,20 @@ export default function Enquiries() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if(window.confirm("Are you sure you want to permanently delete this enquiry?")) {
+      try {
+        const response = await fetch(`${API_URL}?action=delete_enquiry`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enquiry_id: id })
+        });
+        const data = await response.json();
+        if (data.success) fetchEnquiries();
+      } catch (err) { console.error(err); }
+    }
+  };
+
   const [filterRange, setFilterRange] = useState('All Time');
   const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
 

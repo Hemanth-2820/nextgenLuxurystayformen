@@ -274,6 +274,11 @@ try {
         $stmt->execute([$input['complaint_id']]);
         echo json_encode(["success" => true]);
 
+    } elseif ($action === 'delete_complaint') {
+        $stmt = $conn->prepare("DELETE FROM complaints WHERE id = ?");
+        $stmt->execute([$input['complaint_id']]);
+        echo json_encode(["success" => true]);
+
     } elseif ($action === 'get_enquiries') {
         $stmt = $conn->query("SELECT * FROM enquiries ORDER BY created_at DESC");
         echo json_encode($stmt->fetchAll());
@@ -287,6 +292,86 @@ try {
         $stmt = $conn->prepare("UPDATE enquiries SET status = ? WHERE id = ?");
         $stmt->execute([$input['status'], $input['enquiry_id']]);
         echo json_encode(["success" => true]);
+
+    } elseif ($action === 'delete_enquiry') {
+        $stmt = $conn->prepare("DELETE FROM enquiries WHERE id = ?");
+        $stmt->execute([$input['enquiry_id']]);
+        echo json_encode(["success" => true]);
+
+    } elseif ($action === 'get_inventory') {
+        $stmt = $conn->query("SELECT * FROM inventory ORDER BY item_name ASC");
+        echo json_encode($stmt->fetchAll());
+        
+    } elseif ($action === 'add_inventory') {
+        $stmt = $conn->prepare("INSERT INTO inventory (item_name, quantity, unit) VALUES (?, ?, ?)");
+        $stmt->execute([$input['item_name'], $input['quantity'], $input['unit']]);
+        echo json_encode(["success" => true]);
+        
+    } elseif ($action === 'update_inventory') {
+        $stmt = $conn->prepare("UPDATE inventory SET quantity = ? WHERE id = ?");
+        $stmt->execute([$input['quantity'], $input['inventory_id']]);
+        echo json_encode(["success" => true]);
+        
+    } elseif ($action === 'delete_inventory') {
+        $stmt = $conn->prepare("DELETE FROM inventory WHERE id = ?");
+        $stmt->execute([$input['inventory_id']]);
+        echo json_encode(["success" => true]);
+
+    } elseif ($action === 'send_announcement') {
+        $message_body = $input['message'];
+        
+        $stmt = $conn->query("SELECT email, name FROM members WHERE status = 'Active' AND email IS NOT NULL AND email != ''");
+        $members = $stmt->fetchAll();
+        
+        $success_count = 0;
+        foreach ($members as $m) {
+            $to = $m['email'];
+            $subject = "Important Announcement - NextGen Luxury Stay";
+            
+            $headers = "MIME-Version: 1.0\r\n";
+            $headers .= "Content-type:text/html;charset=UTF-8\r\n";
+            $headers .= "From: NextGen Luxury Stay <info@nextgen.nexlifly.in>\r\n";
+            
+            $safe_message = nl2br(htmlspecialchars($message_body));
+            
+            $html = "
+            <html>
+            <head>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #111827; color: #f3f4f6; margin: 0; padding: 20px; }
+                    .container { max-width: 600px; margin: 0 auto; background-color: #1f2937; padding: 30px; border-radius: 12px; border: 1px solid #374151; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    .logo { max-height: 80px; display: block; margin: 0 auto; }
+                    .title { color: #d4af37; font-size: 24px; font-weight: bold; margin-top: 20px; }
+                    .content { font-size: 16px; line-height: 1.6; color: #d1d5db; padding: 20px; background: #374151; border-radius: 8px; margin-top: 20px; }
+                    .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #374151; padding-top: 20px; }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <img src='https://nextgen.nexlifly.in/logo.png' alt='NextGen Luxury Stay' class='logo' />
+                        <div class='title'>Important Announcement</div>
+                    </div>
+                    <p>Dear " . htmlspecialchars($m['name']) . ",</p>
+                    <div class='content'>
+                        " . $safe_message . "
+                    </div>
+                    <br/>
+                    <p>Warm regards,</p>
+                    <p><strong style='color:#d4af37;'>The NextGen Management Team</strong></p>
+                    <div class='footer'>
+                        &copy; " . date('Y') . " NextGen Luxury Stay For Men. All rights reserved.
+                    </div>
+                </div>
+            </body>
+            </html>
+            ";
+            
+            mail($to, $subject, $html, $headers);
+            $success_count++;
+        }
+        echo json_encode(["success" => true, "sent_count" => $success_count]);
 
     } else {
         http_response_code(400);

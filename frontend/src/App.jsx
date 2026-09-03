@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { Home, Users, DoorOpen, IndianRupee, Receipt, LogOut, MessageSquareWarning, PhoneCall, Menu, X } from 'lucide-react';
+import { Home, Users, DoorOpen, IndianRupee, Receipt, LogOut, MessageSquareWarning, PhoneCall, Menu, X, ShoppingCart, Megaphone } from 'lucide-react';
 
 import Dashboard from './pages/Dashboard';
 import Rooms from './pages/Rooms';
@@ -10,6 +10,8 @@ import Expenses from './pages/Expenses';
 import Login from './pages/Login';
 import Complaints from './pages/Complaints';
 import Enquiries from './pages/Enquiries';
+import Inventory from './pages/Inventory';
+import Announcements from './pages/Announcements';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -74,9 +76,17 @@ function App() {
               <Receipt size={20} />
               <span>Expenses</span>
             </Link>
+            <Link to="/inventory" onClick={handleLinkClick} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-dark-900 hover:text-gold-500 transition-colors">
+              <ShoppingCart size={20} />
+              <span>Inventory</span>
+            </Link>
             <Link to="/complaints" onClick={handleLinkClick} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-dark-900 hover:text-gold-500 transition-colors">
               <MessageSquareWarning size={20} />
               <span>Complaints</span>
+            </Link>
+            <Link to="/announcements" onClick={handleLinkClick} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-dark-900 hover:text-gold-500 transition-colors">
+              <Megaphone size={20} />
+              <span>Announcements</span>
             </Link>
             <Link to="/enquiries" onClick={handleLinkClick} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-dark-900 hover:text-gold-500 transition-colors">
               <PhoneCall size={20} />
@@ -104,7 +114,9 @@ function App() {
               <Route path="/members" element={<Members />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/expenses" element={<Expenses />} />
+              <Route path="/inventory" element={<Inventory />} />
               <Route path="/complaints" element={<Complaints />} />
+              <Route path="/announcements" element={<Announcements />} />
               <Route path="/enquiries" element={<Enquiries />} />
             </Routes>
           </div>

@@ -42,6 +42,103 @@ export default function Members() {
     }
   };
 
+  const generateReceiptPDF = (memberData, roomName, bedName, isDownload = false) => {
+    const doc = new jsPDF();
+    doc.setFontSize(22);
+    doc.setTextColor(212, 175, 55);
+    doc.text("NextGen Luxury Stay", 105, 15, null, null, "center");
+    
+    doc.setFontSize(16);
+    doc.setTextColor(50);
+    doc.text("Admission & Payment Receipt", 105, 23, null, null, "center");
+    
+    doc.setDrawColor(212, 175, 55);
+    doc.line(15, 27, 195, 27);
+    
+    doc.setTextColor(0);
+    doc.setFontSize(11);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 35);
+    doc.text(`Member Name: ${memberData.name}`, 15, 43);
+    doc.text(`Phone: ${memberData.phone}`, 15, 51);
+    doc.text(`Email: ${memberData.email || 'N/A'}`, 15, 59);
+    
+    doc.text(`Room Number: ${roomName || 'N/A'}`, 120, 43);
+    doc.text(`Bed Allocated: ${bedName || 'N/A'}`, 120, 51);
+    doc.text(`Joining Date: ${memberData.joining_date || new Date().toISOString().split('T')[0]}`, 120, 59);
+    
+    doc.line(15, 65, 195, 65);
+    
+    doc.text(`Monthly Rent: Rs. ${memberData.monthly_rent}`, 15, 75);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Advance Paid: Rs. ${memberData.advance_paid}`, 15, 83);
+    
+    // Terms and Conditions
+    doc.setFontSize(10);
+    doc.setTextColor(200, 0, 0);
+    doc.text("Note: Once paid, the amount is not refundable.", 15, 95);
+
+    doc.setTextColor(0);
+    doc.text("Terms & Conditions:", 15, 105);
+    
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    
+    const rules = [
+      "1. If anybody wants to vacate the PG they should inform 30 DAYS before. Otherwise 30 DAYS RENT must be paid.",
+      "2. Rent should be paid on or before 5th of every month.",
+      "3. Once paid Rent & Advance cannot be returned back or Transferred.",
+      "4. Outside people are not allowed without Owner's permission.",
+      "5. Management is not responsible for your belongings like Gold, Cash, Credit/Debit Card, Mobile & Laptops etc.,",
+      "6. Please make sure that all the Lights, Fans & Geysers are SWITCHED OFF before you leave the room.",
+      "7. Do not throw anything from window.",
+      "8. Smoking & Liquor not allowed inside the PG.",
+      "9. If you damage anything belonging to PG, you have to pay for that.",
+      "10. If you lose the KEY you have to pay Rs. 1000/- for duplicate KEY.",
+      "11. Iron Box Extra Rs.500/-",
+      "12. Food not allowed in rooms, should eat at dining hall only.",
+      "13. Gate should be closed at 11.00 pm",
+      "14. Every Month Second Sunday NO DINNER",
+      "15. In case of not following the rules mentioned above Management has the right to vacate guest immediately."
+    ];
+
+    let yPos = 112;
+    rules.forEach(rule => {
+      const splitTitle = doc.splitTextToSize(rule, 180);
+      doc.text(splitTitle, 15, yPos);
+      yPos += (splitTitle.length * 4);
+    });
+
+    yPos += 5;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(212, 175, 55);
+    doc.text("FOOD TIMINGS", 105, yPos, null, null, "center");
+    
+    yPos += 6;
+    doc.setTextColor(0);
+    doc.setFontSize(8);
+    doc.text("BREAKFAST: 8.00-9.30", 40, yPos);
+    doc.text("LUNCH: 12.30-2.30", 90, yPos);
+    doc.text("DINNER: 8.00-9.30", 140, yPos);
+
+    yPos += 10;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+    doc.text("Mob: 9187580829", 105, yPos, null, null, "center");
+    
+    yPos += 6;
+    doc.setFontSize(8);
+    doc.setTextColor(200, 0, 0);
+    doc.text("PG IS NOT RESPONSIBLE IN CASE OF LOSS OF ANY OF YOUR BELONGINGS", 105, yPos, null, null, "center");
+
+    if (isDownload) {
+      doc.save(`Receipt_${memberData.name.replace(' ', '_')}.pdf`);
+      return null;
+    } else {
+      return doc.output('datauristring');
+    }
+  };
+
   useEffect(() => {
     fetchMembers();
     fetchRooms();
@@ -54,43 +151,8 @@ export default function Members() {
     const selectedRoom = rooms.find(r => r.id == newMember.room_id);
     const selectedBed = selectedRoom?.beds?.find(b => b.id == newMember.bed_id);
     
-    // 1. Generate Beautiful PDF Receipt
-    const doc = new jsPDF();
-    doc.setFontSize(22);
-    doc.setTextColor(212, 175, 55); // Gold
-    doc.text("NextGen Luxury Stay", 105, 20, null, null, "center");
-    
-    doc.setFontSize(16);
-    doc.setTextColor(50);
-    doc.text("Admission & Payment Receipt", 105, 30, null, null, "center");
-    
-    doc.setDrawColor(212, 175, 55);
-    doc.line(20, 35, 190, 35);
-    
-    doc.setTextColor(0);
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 50);
-    doc.text(`Member Name: ${newMember.name}`, 20, 65);
-    doc.text(`Phone: ${newMember.phone}`, 20, 75);
-    doc.text(`Email: ${newMember.email}`, 20, 85);
-    
-    doc.text(`Room Number: ${selectedRoom?.room_number || 'N/A'}`, 120, 65);
-    doc.text(`Bed Allocated: ${selectedBed?.name || 'N/A'}`, 120, 75);
-    doc.text(`Joining Date: ${newMember.joining_date}`, 120, 85);
-    
-    doc.line(20, 95, 190, 95);
-    
-    doc.text(`Monthly Rent: Rs. ${newMember.monthly_rent}`, 20, 110);
-    doc.setFont(undefined, 'bold');
-    doc.text(`Advance Paid: Rs. ${newMember.advance_paid}`, 20, 120);
-    doc.setFont(undefined, 'normal');
-
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    doc.text("This is a computer-generated receipt and requires no physical signature.", 105, 280, null, null, "center");
-
-    // 2. Convert PDF to Base64 String
-    const pdfBase64 = doc.output('datauristring');
+    // 1. Generate Beautiful PDF Receipt with Rules
+    const pdfBase64 = generateReceiptPDF(newMember, selectedRoom?.room_number, selectedBed?.name, false);
     
     // 3. Send to PHP Backend
     const payload = {
@@ -331,6 +393,9 @@ export default function Members() {
                         ) : (
                           <span className="text-gray-400 italic text-sm">Moved Out</span>
                         )}
+                        <button onClick={() => generateReceiptPDF(member, member.room_number, member.bed_name, true)} title="Download Receipt" className="p-2 bg-dark-800 hover:bg-gold-500/20 text-gold-500 rounded-lg transition-colors border border-gold-500/30">
+                          <FileText size={16} />
+                        </button>
                         <button className="p-2 bg-dark-800 hover:bg-dark-700 text-gray-400 hover:text-white rounded-lg transition-colors border border-gray-700">
                           <Edit2 size={16} />
                         </button>
