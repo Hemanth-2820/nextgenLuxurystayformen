@@ -1,14 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { Home, Users, DoorOpen, IndianRupee, Receipt } from 'lucide-react';
+import { Home, Users, DoorOpen, IndianRupee, Receipt, LogOut, MessageSquareWarning } from 'lucide-react';
 
 import Dashboard from './pages/Dashboard';
 import Rooms from './pages/Rooms';
 import Members from './pages/Members';
 import Payments from './pages/Payments';
 import Expenses from './pages/Expenses';
+import Login from './pages/Login';
+import Complaints from './pages/Complaints';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
+
   return (
     <BrowserRouter>
       <div className="flex h-screen overflow-hidden bg-dark-900 text-gray-200">
@@ -41,7 +49,21 @@ function App() {
               <Receipt size={20} />
               <span>Expenses</span>
             </Link>
+            <Link to="/complaints" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-dark-900 hover:text-gold-500 transition-colors">
+              <MessageSquareWarning size={20} />
+              <span>Complaints</span>
+            </Link>
           </nav>
+          
+          <div className="p-4 mt-auto">
+            <button 
+              onClick={() => setIsAuthenticated(false)}
+              className="flex items-center w-full space-x-3 p-3 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <LogOut size={20} />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </aside>
 
         {/* Main Content Area */}
@@ -53,6 +75,7 @@ function App() {
               <Route path="/members" element={<Members />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/expenses" element={<Expenses />} />
+              <Route path="/complaints" element={<Complaints />} />
             </Routes>
           </div>
         </main>

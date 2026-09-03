@@ -70,14 +70,14 @@ export default function Expenses() {
 
         {/* Expenses List */}
         <div className="col-span-2">
-          <div className="bg-dark-900 rounded-xl border border-gray-700 overflow-hidden h-full">
-            <table className="w-full text-left">
-              <thead className="bg-dark-800 text-gold-500 border-b border-gray-700">
+          <div className="bg-dark-900 rounded-xl border border-gray-700 overflow-auto max-h-[calc(100vh-200px)]">
+            <table className="w-full text-left min-w-max">
+              <thead className="bg-dark-800 text-gold-500 sticky top-0 z-10 shadow-md">
                 <tr>
-                  <th className="p-4">Date</th>
-                  <th className="p-4">Title</th>
-                  <th className="p-4">Category</th>
-                  <th className="p-4 text-right">Amount</th>
+                  <th className="p-4 bg-dark-800">Date</th>
+                  <th className="p-4 bg-dark-800">Title</th>
+                  <th className="p-4 bg-dark-800">Category</th>
+                  <th className="p-4 bg-dark-800 text-right">Amount</th>
                 </tr>
               </thead>
               <tbody>

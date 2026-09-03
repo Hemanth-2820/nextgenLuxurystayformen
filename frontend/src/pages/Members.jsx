@@ -6,17 +6,16 @@ const API_URL = 'http://localhost/backend';
 export default function Members() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [newMember, setNewMember] = useState({
-    name: '', phone: '', room_id: '', joining_date: '', advance_paid: '', monthly_rent: ''
-  });
+  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', room_id: '', joining_date: '', advance_paid: '', monthly_rent: '' });
+  const [idProof, setIdProof] = useState(null);
 
   const [rooms, setRooms] = useState([]);
 
   const fetchMembers = () => {
     setMembers([
-      { id: 1, name: 'John Doe', phone: '1234567890', room_number: '101', joining_date: '2023-09-01', advance_paid: '5000', monthly_rent: '8000', status: 'Active' },
-      { id: 2, name: 'Alex Smith', phone: '0987654321', room_number: '102', joining_date: '2023-09-02', advance_paid: '6000', monthly_rent: '8500', status: 'Active' },
-      { id: 3, name: 'David Lee', phone: '1122334455', room_number: '101', joining_date: '2023-10-15', advance_paid: '5000', monthly_rent: '8000', status: 'Active' },
+      { id: 1, name: 'John Doe', email: 'john@example.com', phone: '1234567890', room_number: '101', joining_date: '2023-09-01', advance_paid: '5000', monthly_rent: '8000', status: 'Active', kyc: 'Verified' },
+      { id: 2, name: 'Alex Smith', email: 'alex@example.com', phone: '0987654321', room_number: '102', joining_date: '2023-09-02', advance_paid: '6000', monthly_rent: '8500', status: 'Active', kyc: 'Verified' },
+      { id: 3, name: 'David Lee', email: 'david@example.com', phone: '1122334455', room_number: '101', joining_date: '2023-10-15', advance_paid: '5000', monthly_rent: '8000', status: 'Active', kyc: 'Pending' },
     ]);
   };
 
@@ -38,8 +37,9 @@ export default function Members() {
     setLoading(true);
     
     setTimeout(() => {
-      setMembers([{ id: Date.now(), ...newMember, status: 'Active', room_number: rooms.find(r => r.id == newMember.room_id)?.room_number || 'N/A' }, ...members]);
-      setNewMember({ name: '', phone: '', room_id: '', joining_date: '', advance_paid: '', monthly_rent: '' });
+      setMembers([{ id: Date.now(), ...newMember, status: 'Active', room_number: rooms.find(r => r.id == newMember.room_id)?.room_number || 'N/A', kyc: idProof ? 'Verified' : 'Pending' }, ...members]);
+      setNewMember({ name: '', email: '', phone: '', room_id: '', joining_date: '', advance_paid: '', monthly_rent: '' });
+      setIdProof(null);
       setLoading(false);
     }, 500);
   };
@@ -59,15 +59,27 @@ export default function Members() {
           <div className="bg-dark-900 p-6 rounded-xl border border-gray-700">
             <h2 className="text-xl font-bold mb-4">Add New Member</h2>
             <form onSubmit={handleAddMember} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Full Name</label>
-                <input type="text" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none"
-                  value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Phone</label>
-                <input type="text" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none"
-                  value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Full Name</label>
+                  <input type="text" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                    value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Email Address</label>
+                  <input type="email" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                    value={newMember.email} onChange={e => setNewMember({...newMember, email: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
+                  <input type="tel" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                    value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">ID Proof (Aadhar/PAN)</label>
+                  <input type="file" className="w-full bg-dark-800 border border-gray-700 rounded-lg p-1.5 focus:border-gold-500 focus:outline-none text-gray-300 file:bg-dark-900 file:text-gold-500 file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3"
+                    onChange={e => setIdProof(e.target.files[0])} />
+                </div>
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Assign Room</label>
@@ -104,24 +116,32 @@ export default function Members() {
 
         {/* Member List */}
         <div className="col-span-2">
-          <div className="bg-dark-900 rounded-xl border border-gray-700 overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-dark-800 text-gold-500 border-b border-gray-700">
+          <div className="bg-dark-900 rounded-xl border border-gray-700 overflow-auto max-h-[calc(100vh-200px)]">
+            <table className="w-full text-left min-w-max">
+              <thead className="bg-dark-800 text-gold-500 sticky top-0 z-10 shadow-md">
                 <tr>
-                  <th className="p-4">Name</th>
-                  <th className="p-4">Room</th>
-                  <th className="p-4">Rent</th>
-                  <th className="p-4">Advance</th>
-                  <th className="p-4">Joined</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 text-right">Actions</th>
+                  <th className="p-4 bg-dark-800">Member Info</th>
+                  <th className="p-4 bg-dark-800">Room</th>
+                  <th className="p-4 bg-dark-800">Rent</th>
+                  <th className="p-4 bg-dark-800">Advance</th>
+                  <th className="p-4 bg-dark-800">Joined</th>
+                  <th className="p-4 bg-dark-800">Status</th>
+                  <th className="p-4 bg-dark-800 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {members.map(member => (
                   <tr key={member.id} className="border-b border-gray-800 hover:bg-dark-800 transition-colors">
-                    <td className="p-4 font-bold">{member.name}<br/><span className="text-xs text-gray-400 font-normal">{member.phone}</span></td>
-                    <td className="p-4">Room {member.room_number}</td>
+                    <td className="p-4">
+                      <div className="font-bold text-white">{member.name}</div>
+                      <div className="text-xs text-gray-400">{member.email || 'no-email@example.com'}</div>
+                      {member.kyc === 'Verified' ? (
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded text-[10px] uppercase font-bold">KYC Verified</span>
+                      ) : (
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-gray-700 text-gray-400 border border-gray-600 rounded text-[10px] uppercase font-bold">KYC Pending</span>
+                      )}
+                    </td>
+                    <td className="p-4 text-gray-300">Room {member.room_number}</td>
                     <td className="p-4">₹{member.monthly_rent}</td>
                     <td className="p-4">₹{member.advance_paid}</td>
                     <td className="p-4">{member.joining_date}</td>
