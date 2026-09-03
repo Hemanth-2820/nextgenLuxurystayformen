@@ -29,6 +29,19 @@ export default function Members() {
       .catch(err => console.error(err));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setIdProof(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setIdProof(null);
+    }
+  };
+
   useEffect(() => {
     fetchMembers();
     fetchRooms();
@@ -82,7 +95,8 @@ export default function Members() {
     // 3. Send to PHP Backend
     const payload = {
         ...newMember,
-        pdf_base64: pdfBase64
+        pdf_base64: pdfBase64,
+        id_proof_base64: idProof
     };
 
     try {
@@ -204,8 +218,8 @@ export default function Members() {
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">ID Proof (Aadhar/PAN)</label>
-                  <input type="file" className="w-full bg-dark-800 border border-gray-700 rounded-lg p-1.5 focus:border-gold-500 focus:outline-none text-gray-300 file:bg-dark-900 file:text-gold-500 file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3"
-                    onChange={e => setIdProof(e.target.files[0])} />
+                  <input type="file" accept="image/*" className="w-full bg-dark-800 border border-gray-700 rounded-lg p-1.5 focus:border-gold-500 focus:outline-none text-gray-300 file:bg-dark-900 file:text-gold-500 file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3"
+                    onChange={handleFileChange} />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -273,13 +287,14 @@ export default function Members() {
                   <th className="p-4 bg-dark-800">Rent</th>
                   <th className="p-4 bg-dark-800">Advance</th>
                   <th className="p-4 bg-dark-800">Joined</th>
+                  <th className="p-4 bg-dark-800">ID Proof</th>
                   <th className="p-4 bg-dark-800">Status</th>
                   <th className="p-4 bg-dark-800 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredMembers.length === 0 ? (
-                  <tr><td colSpan="7" className="p-8 text-center text-gray-400">No members found for this time range.</td></tr>
+                  <tr><td colSpan="8" className="p-8 text-center text-gray-400">No members found for this time range.</td></tr>
                 ) : filteredMembers.map(member => (
                   <tr key={member.id} className="border-b border-gray-800 hover:bg-dark-800 transition-colors">
                     <td className="p-4">
@@ -293,6 +308,15 @@ export default function Members() {
                     <td className="p-4">₹{member.monthly_rent}</td>
                     <td className="p-4">₹{member.advance_paid}</td>
                     <td className="p-4">{member.joining_date}</td>
+                    <td className="p-4">
+                      {member.id_proof_url ? (
+                        <a href={member.id_proof_url} target="_blank" rel="noopener noreferrer" className="text-gold-500 hover:underline flex items-center gap-1 text-sm font-semibold">
+                          <FileText size={16} /> View
+                        </a>
+                      ) : (
+                        <span className="text-gray-600">-</span>
+                      )}
+                    </td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${member.status === 'Active' ? 'bg-green-500 text-dark-900' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
                         {member.status}

@@ -52,14 +52,33 @@ try {
         echo json_encode($stmt->fetchAll());
 
     } elseif ($action === 'add_member') {
+        $id_proof_url = null;
+        if (!empty($input['id_proof_base64'])) {
+            $uploads_dir = __DIR__ . '/uploads';
+            if (!is_dir($uploads_dir)) {
+                mkdir($uploads_dir, 0755, true);
+            }
+            // Parse base64
+            $image_parts = explode(";base64,", $input['id_proof_base64']);
+            if (count($image_parts) === 2) {
+                $image_type_aux = explode("image/", $image_parts[0]);
+                $image_type = $image_type_aux[1] ?? 'jpg';
+                $image_base64 = base64_decode($image_parts[1]);
+                $file_name = 'aadhar_' . time() . '_' . uniqid() . '.' . $image_type;
+                $file_path = $uploads_dir . '/' . $file_name;
+                file_put_contents($file_path, $image_base64);
+                $id_proof_url = 'https://nextgen.nexlifly.in/backend/uploads/' . $file_name;
+            }
+        }
+
         $stmt = $conn->prepare("
-            INSERT INTO members (name, email, phone, room_id, bed_id, joining_date, monthly_rent, advance_paid) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO members (name, email, phone, room_id, bed_id, joining_date, monthly_rent, advance_paid, id_proof_url) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             $input['name'], $input['email'], $input['phone'], 
             $input['room_id'], $input['bed_id'], $input['joining_date'], 
-            $input['monthly_rent'], $input['advance_paid']
+            $input['monthly_rent'], $input['advance_paid'], $id_proof_url
         ]);
         
         // Update occupancy
