@@ -41,7 +41,7 @@ export default function Rooms() {
 
   return (
     <div className="p-4 md:p-8">
-      <h1 className="text-2xl md:text-3xl font-bold text-gold-500 mb-6 flex items-center gap-3">
+      <h1 className="text-2xl md:text-3xl font-bold text-indigo-600 mb-6 flex items-center gap-3">
         <DoorOpen size={32} className="hidden md:block" /> Room Inventory 
       </h1>
       
@@ -49,35 +49,35 @@ export default function Rooms() {
         
         {/* Add Room Form */}
         <div className="col-span-1">
-          <div className="bg-dark-900 p-6 rounded-xl border border-gray-700">
+          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
             <h2 className="text-xl font-bold mb-4">Add New Room</h2>
             <form onSubmit={handleAddRoom} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Room Number</label>
-                  <input type="text" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                  <label className="block text-sm text-gray-500 mb-1">Room Number</label>
+                  <input type="text" required className="w-full bg-white border border-gray-200 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-gray-900"
                     value={newRoom.room_number} onChange={e => setNewRoom({...newRoom, room_number: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Total Capacity</label>
-                  <input type="number" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                  <label className="block text-sm text-gray-500 mb-1">Total Capacity</label>
+                  <input type="number" required className="w-full bg-white border border-gray-200 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-gray-900"
                     value={newRoom.capacity} onChange={e => setNewRoom({...newRoom, capacity: e.target.value})} />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Amenities Provided</label>
-                <div className="flex flex-wrap gap-6 bg-dark-800 p-3 rounded-lg border border-gray-700">
-                  <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white">
+                <label className="block text-sm text-gray-500 mb-2">Amenities Provided</label>
+                <div className="flex flex-wrap gap-6 bg-white p-3 rounded-lg border border-gray-200">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-900">
                     <input type="checkbox" checked={newRoom.inventory.bed} onChange={(e) => setNewRoom({...newRoom, inventory: {...newRoom.inventory, bed: e.target.checked}})} className="accent-gold-500 w-4 h-4" /> Bed
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-900">
                     <input type="checkbox" checked={newRoom.inventory.ac} onChange={(e) => setNewRoom({...newRoom, inventory: {...newRoom.inventory, ac: e.target.checked}})} className="accent-gold-500 w-4 h-4" /> AC
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-900">
                     <input type="checkbox" checked={newRoom.inventory.geyser} onChange={(e) => setNewRoom({...newRoom, inventory: {...newRoom.inventory, geyser: e.target.checked}})} className="accent-gold-500 w-4 h-4" /> Geyser
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-900">
                     <input type="checkbox" checked={newRoom.inventory.tv} onChange={(e) => setNewRoom({...newRoom, inventory: {...newRoom.inventory, tv: e.target.checked}})} className="accent-gold-500 w-4 h-4" /> TV
                   </label>
                 </div>
@@ -96,26 +96,26 @@ export default function Rooms() {
             {rooms.map(room => {
               const isFull = room.current_occupancy >= room.capacity;
               return (
-                <div key={room.id} className="bg-dark-900 p-5 rounded-xl border border-gray-700 flex flex-col hover:border-gold-500 transition-colors">
+                <div key={room.id} className="bg-gray-50 p-5 rounded-xl border border-gray-200 flex flex-col hover:border-indigo-500 transition-colors">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-2xl font-bold text-gold-500">Room {room.room_number}</h3>
-                      <p className="text-gray-400 mt-1">Occupancy: {room.current_occupancy} / {room.capacity}</p>
+                      <h3 className="text-2xl font-bold text-indigo-600">Room {room.room_number}</h3>
+                      <p className="text-gray-500 mt-1">Occupancy: {room.current_occupancy} / {room.capacity}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${isFull ? 'bg-red-500 text-white' : 'bg-green-500 text-dark-900'}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${isFull ? 'bg-red-500 text-gray-900' : 'bg-green-500 text-white'}`}>
                       {isFull ? 'FULL' : 'AVAILABLE'}
                     </span>
                   </div>
                   
-                  <div className="flex justify-between items-end border-t border-gray-800 pt-4 mt-4">
+                  <div className="flex justify-between items-end border-t border-gray-100 pt-4 mt-4">
                     <div className="flex gap-2 text-gray-500">
-                      {room.inventory?.bed && <Bed size={18} className="text-gold-500" title="Bed Provided" />}
+                      {room.inventory?.bed && <Bed size={18} className="text-indigo-600" title="Bed Provided" />}
                       {room.inventory?.ac && <Wind size={18} className="text-blue-400" title="Air Conditioning" />}
                       {room.inventory?.geyser && <Droplets size={18} className="text-orange-400" title="Geyser" />}
                       {room.inventory?.tv && <Tv size={18} className="text-purple-400" title="Television" />}
                     </div>
                     <div>
-                      <p className="text-sm text-gray-400">Available</p>
+                      <p className="text-sm text-gray-500">Available</p>
                       <p className={`text-xl font-bold text-right ${parseInt(room.capacity) - parseInt(room.current_occupancy) === 0 ? 'text-red-500' : 'text-green-500'}`}>
                         {parseInt(room.capacity) - parseInt(room.current_occupancy)} Beds
                       </p>

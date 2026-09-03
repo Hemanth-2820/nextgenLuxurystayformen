@@ -20,11 +20,11 @@ export default function Expenses() {
   return (
     <div className="p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gold-500 flex items-center gap-3">
+        <h1 className="text-2xl md:text-3xl font-bold text-indigo-600 flex items-center gap-3">
           <Receipt size={32} className="hidden md:block" /> Expense Tracker
         </h1>
-        <div className="bg-dark-900 px-6 py-3 rounded-xl border border-gray-700 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-          <p className="text-gray-400 text-sm font-semibold uppercase">Total Expenses</p>
+        <div className="bg-gray-50 px-6 py-3 rounded-xl border border-gray-200 shadow-sm">
+          <p className="text-gray-500 text-sm font-semibold uppercase">Total Expenses</p>
           <p className="text-2xl font-bold text-red-400">₹{totalExpenses.toLocaleString()}</p>
         </div>
       </div>
@@ -33,22 +33,22 @@ export default function Expenses() {
         
         {/* Add Expense Form */}
         <div className="col-span-1">
-          <div className="bg-dark-900 p-6 rounded-xl border border-gray-700">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Plus size={20} className="text-gold-500" /> Log Expense</h2>
+          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Plus size={20} className="text-indigo-600" /> Log Expense</h2>
             <form onSubmit={handleAddExpense} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Title</label>
-                <input type="text" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                <label className="block text-sm text-gray-500 mb-1">Title</label>
+                <input type="text" required className="w-full bg-white border border-gray-200 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-gray-900"
                   value={newExpense.title} onChange={e => setNewExpense({...newExpense, title: e.target.value})} placeholder="e.g. Plumber" />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Amount (₹)</label>
-                <input type="number" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                <label className="block text-sm text-gray-500 mb-1">Amount (₹)</label>
+                <input type="number" required className="w-full bg-white border border-gray-200 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-gray-900"
                   value={newExpense.amount} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Category</label>
-                <select className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
+                <label className="block text-sm text-gray-500 mb-1">Category</label>
+                <select className="w-full bg-white border border-gray-200 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-gray-900"
                   value={newExpense.category} onChange={e => setNewExpense({...newExpense, category: e.target.value})}>
                   <option value="Utilities">Utilities (Electricity/Water)</option>
                   <option value="Maintenance">Maintenance & Repairs</option>
@@ -57,8 +57,8 @@ export default function Expenses() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Date</label>
-                <input type="date" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-gray-300"
+                <label className="block text-sm text-gray-500 mb-1">Date</label>
+                <input type="date" required className="w-full bg-white border border-gray-200 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-gray-700"
                   value={newExpense.date} onChange={e => setNewExpense({...newExpense, date: e.target.value})} />
               </div>
               <button type="submit" className="w-full btn-primary mt-4 flex justify-center items-center gap-2">
@@ -70,25 +70,25 @@ export default function Expenses() {
 
         {/* Expenses List */}
         <div className="col-span-2">
-          <div className="bg-dark-900 rounded-xl border border-gray-700 overflow-auto max-h-[calc(100vh-200px)]">
+          <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-auto max-h-[calc(100vh-200px)]">
             <table className="w-full text-left min-w-max">
-              <thead className="bg-dark-800 text-gold-500 sticky top-0 z-10 shadow-md">
+              <thead className="bg-white text-indigo-600 sticky top-0 z-10 shadow-md">
                 <tr>
-                  <th className="p-4 bg-dark-800">Date</th>
-                  <th className="p-4 bg-dark-800">Title</th>
-                  <th className="p-4 bg-dark-800">Category</th>
-                  <th className="p-4 bg-dark-800 text-right">Amount</th>
+                  <th className="p-4 bg-white">Date</th>
+                  <th className="p-4 bg-white">Title</th>
+                  <th className="p-4 bg-white">Category</th>
+                  <th className="p-4 bg-white text-right">Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {expenses.length === 0 ? (
                   <tr><td colSpan="4" className="p-8 text-center text-gray-500">No expenses logged yet.</td></tr>
                 ) : expenses.map(expense => (
-                  <tr key={expense.id} className="border-b border-gray-800 hover:bg-dark-800 transition-colors">
-                    <td className="p-4 text-gray-400 text-sm">{expense.date}</td>
-                    <td className="p-4 font-bold text-white">{expense.title}</td>
-                    <td className="p-4 text-gray-300">
-                      <span className="bg-dark-800 px-2 py-1 rounded-md text-xs border border-gray-700">{expense.category}</span>
+                  <tr key={expense.id} className="border-b border-gray-100 hover:bg-white transition-colors">
+                    <td className="p-4 text-gray-500 text-sm">{expense.date}</td>
+                    <td className="p-4 font-bold text-gray-900">{expense.title}</td>
+                    <td className="p-4 text-gray-700">
+                      <span className="bg-white px-2 py-1 rounded-md text-xs border border-gray-200">{expense.category}</span>
                     </td>
                     <td className="p-4 text-right font-bold text-red-400">₹{expense.amount.toLocaleString()}</td>
                   </tr>
