@@ -14,7 +14,7 @@ import Inventory from './pages/Inventory';
 import Announcements from './pages/Announcements';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('adminToken'));
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (!isAuthenticated) {
@@ -96,7 +96,10 @@ function App() {
           
           <div className="p-4 mt-auto">
             <button 
-              onClick={() => setIsAuthenticated(false)}
+              onClick={() => {
+                localStorage.removeItem('adminToken');
+                setIsAuthenticated(false);
+              }}
               className="flex items-center w-full space-x-3 p-3 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-500 transition-colors"
             >
               <LogOut size={20} />

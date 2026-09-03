@@ -7,7 +7,23 @@ $action = $_GET['action'] ?? '';
 $input = json_decode(file_get_contents('php://input'), true);
 
 try {
-    if ($action === 'get_rooms') {
+    if ($action === 'login') {
+        $stmt = $conn->prepare("SELECT * FROM admins WHERE username = ?");
+        $stmt->execute([$input['username']]);
+        $admin = $stmt->fetch();
+        
+        if ($admin && password_verify($input['password'], $admin['password'])) {
+            echo json_encode([
+                "success" => true,
+                "token" => bin2hex(random_bytes(16)),
+                "username" => $admin['username']
+            ]);
+        } else {
+            http_response_code(401);
+            echo json_encode(["success" => false, "error" => "Invalid username or password"]);
+        }
+        
+    } elseif ($action === 'get_rooms') {
         $stmt = $conn->query("SELECT * FROM rooms ORDER BY room_number");
         $rooms = $stmt->fetchAll();
 

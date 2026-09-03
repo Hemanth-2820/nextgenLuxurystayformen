@@ -140,12 +140,26 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-dark-900 p-6 rounded-xl border border-gray-700 shadow-lg hover:border-gold-500 transition-colors">
           <h2 className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Revenue this Month</h2>
           <p className="text-4xl font-bold mt-2 text-gold-500">₹{stats.revenueThisMonth.toLocaleString()}</p>
         </div>
         
+        <div className="bg-dark-900 p-6 rounded-xl border border-gray-700 shadow-lg hover:border-gold-500 transition-colors relative overflow-hidden">
+          <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl rounded-full ${stats.revenueThisMonth - stats.expensesThisMonth >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'} pointer-events-none`}></div>
+          <h2 className="text-gray-400 text-sm font-semibold uppercase tracking-wider relative z-10">Net Profit</h2>
+          <p className={`text-4xl font-bold mt-2 relative z-10 ${stats.revenueThisMonth - stats.expensesThisMonth >= 0 ? 'text-green-400' : 'text-red-500'}`}>
+            ₹{(stats.revenueThisMonth - stats.expensesThisMonth).toLocaleString()}
+          </p>
+          <div className="mt-3 flex items-center justify-between relative z-10">
+            <span className="text-xs text-gray-500 font-bold tracking-wider">PROFIT MARGIN</span>
+            <span className={`text-xs font-bold px-2 py-1 rounded-md ${stats.revenueThisMonth - stats.expensesThisMonth >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+              {stats.revenueThisMonth > 0 ? Math.round(((stats.revenueThisMonth - stats.expensesThisMonth) / stats.revenueThisMonth) * 100) : 0}%
+            </span>
+          </div>
+        </div>
+
         <div className="bg-dark-900 p-6 rounded-xl border border-gray-700 shadow-lg hover:border-gold-500 transition-colors">
           <h2 className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Expenses this Month</h2>
           <p className="text-4xl font-bold mt-2 text-red-400">₹{stats.expensesThisMonth.toLocaleString()}</p>
