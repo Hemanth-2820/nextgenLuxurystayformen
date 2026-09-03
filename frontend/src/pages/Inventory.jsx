@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Minus, CheckCircle2, Trash2, ShoppingCart } from 'lucide-react';
+import { Package, Plus, Minus, CheckCircle2, Trash2, ShoppingCart, Search } from 'lucide-react';
 
 const API_URL = 'https://nextgen.nexlifly.in/backend/api.php';
 
 export default function Inventory() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [newItem, setNewItem] = useState({ item_name: '', quantity: '', unit: 'kg' });
 
@@ -116,9 +117,13 @@ export default function Inventory() {
                   <select required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none text-white"
                     value={newItem.unit} onChange={e => setNewItem({...newItem, unit: e.target.value})}>
                     <option value="kg">kg</option>
+                    <option value="grams">grams</option>
                     <option value="liters">liters</option>
-                    <option value="pcs">pcs</option>
+                    <option value="pcs">pcs (pieces)</option>
                     <option value="boxes">boxes</option>
+                    <option value="bottles">bottles</option>
+                    <option value="packets">packets</option>
+                    <option value="units">units</option>
                   </select>
                 </div>
               </div>
@@ -131,7 +136,20 @@ export default function Inventory() {
 
         {/* Inventory List */}
         <div className="col-span-1 lg:col-span-2">
-          <div className="bg-dark-900 rounded-xl border border-gray-700 overflow-hidden">
+          <div className="bg-dark-900 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-full">
+            <div className="p-4 border-b border-gray-700 flex flex-col md:flex-row justify-between md:items-center gap-4">
+                <h2 className="text-xl font-bold text-white">Current Stock</h2>
+                <div className="relative min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                        type="text" 
+                        placeholder="Search items..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-dark-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-gold-500 text-sm"
+                    />
+                </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left min-w-max">
                 <thead className="bg-dark-800 text-gold-500">
@@ -145,9 +163,9 @@ export default function Inventory() {
                 <tbody>
                   {loading ? (
                     <tr><td colSpan="4" className="p-8 text-center text-gray-400">Loading inventory...</td></tr>
-                  ) : inventory.length === 0 ? (
-                    <tr><td colSpan="4" className="p-8 text-center text-gray-400">Inventory is empty. Add items to track them.</td></tr>
-                  ) : inventory.map(item => (
+                  ) : inventory.filter(item => !searchTerm || (item.item_name && item.item_name.toLowerCase().includes(searchTerm.toLowerCase()))).length === 0 ? (
+                    <tr><td colSpan="4" className="p-8 text-center text-gray-400">No items found matching your search.</td></tr>
+                  ) : inventory.filter(item => !searchTerm || (item.item_name && item.item_name.toLowerCase().includes(searchTerm.toLowerCase()))).map(item => (
                     <tr key={item.id} className="border-b border-gray-800 hover:bg-dark-800 transition-colors">
                       <td className="p-4 font-bold text-white flex items-center gap-3">
                         <Package size={18} className="text-gray-500" />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IndianRupee, CheckCircle2, Mail, Download, FileText } from 'lucide-react';
+import { IndianRupee, CheckCircle2, Mail, Download, FileText, Search } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { filterByDateRange } from '../utils';
@@ -19,6 +19,10 @@ export default function Payments() {
     fetchPayments();
   }, []);
   const [filterRange, setFilterRange] = useState('All Time');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const availableRanges = ['All Time', 'Today', 'This Week', 'This Month', 'Custom'];
 
   const handleCollect = async (id) => {
     try {
@@ -46,9 +50,17 @@ export default function Payments() {
     alert(`Mock PDF Receipt generated and downloaded for ${name}!`);
   };
 
-  const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
 
-  const filteredPayments = payments.filter(p => filterByDateRange(p.payment_date, filterRange));
+
+  const filteredPayments = payments.filter(p => {
+    const matchesDate = filterByDateRange(p.payment_date, filterRange, customStart, customEnd);
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || 
+        (p.name && p.name.toLowerCase().includes(searchLower)) ||
+        (p.room_number && p.room_number.toString().includes(searchLower)) ||
+        (p.status && p.status.toLowerCase().includes(searchLower));
+    return matchesDate && matchesSearch;
+  });
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -80,9 +92,19 @@ export default function Payments() {
         <h1 className="text-2xl md:text-3xl font-bold text-gold-500 flex items-center gap-3">
           <IndianRupee size={32} className="hidden md:block" /> Rent Collection
         </h1>
-        <div className="flex gap-4 w-full md:w-auto">
+        <div className="flex gap-4 w-full md:w-auto flex-wrap md:flex-nowrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search payments..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-dark-900 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-gold-500"
+            />
+          </div>
           <select 
-            className="bg-dark-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-gold-500 flex-1 md:flex-none"
+            className="bg-dark-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-gold-500 w-full md:w-auto"
             value={filterRange}
             onChange={(e) => setFilterRange(e.target.value)}
           >
@@ -90,6 +112,14 @@ export default function Payments() {
               <option key={r} value={r}>{r}</option>
             ))}
           </select>
+          
+          {filterRange === 'Custom' && (
+            <div className="flex gap-2 items-center w-full md:w-auto">
+              <input type="date" className="bg-dark-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500 w-full" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+              <span className="text-gray-400">to</span>
+              <input type="date" className="bg-dark-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500 w-full" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+            </div>
+          )}
           <button 
             onClick={handleExportPDF}
             className="flex items-center gap-2 bg-dark-800 hover:bg-dark-700 text-gray-300 hover:text-white border border-gray-700 px-4 py-2 rounded-lg transition-colors flex-1 md:flex-none justify-center font-semibold"

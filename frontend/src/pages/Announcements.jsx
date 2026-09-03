@@ -8,12 +8,16 @@ export default function Announcements() {
   const [status, setStatus] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
 
-  const handleSendAnnouncement = async (e) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const triggerSend = (e) => {
     e.preventDefault();
     if (!message.trim()) return;
-    
-    if(!window.confirm("This will send an email to ALL active members immediately. Are you sure?")) return;
+    setShowConfirm(true);
+  };
 
+  const handleSendAnnouncement = async () => {
+    setShowConfirm(false);
     setLoading(true);
     setStatus({ type: '', text: '' });
     
@@ -29,7 +33,7 @@ export default function Announcements() {
             setStatus({ type: 'success', text: `Successfully sent announcement to ${data.sent_count} active members.` });
             setMessage('');
         } else {
-            setStatus({ type: 'error', text: 'Failed to send announcement.' });
+            setStatus({ type: 'error', text: data.error || 'Failed to send announcement.' });
         }
     } catch (err) {
         console.error(err);
@@ -55,7 +59,7 @@ export default function Announcements() {
         {/* Decorative background element */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-gold-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
-        <form onSubmit={handleSendAnnouncement} className="relative z-10">
+        <form onSubmit={triggerSend} className="relative z-10">
           <div className="mb-6">
             <label className="block text-sm font-bold text-gray-300 mb-2">Announcement Message</label>
             <textarea 
@@ -99,12 +103,40 @@ export default function Announcements() {
         <h3 className="font-bold text-gray-300 mb-2 flex items-center gap-2">
           <AlertCircle size={18} className="text-gold-500" /> Pro Tips
         </h3>
-        <ul className="list-disc list-inside text-sm text-gray-400 space-y-1">
+        <ul className="list-disc list-inside text-gray-400 space-y-2 text-sm">
           <li>Only members with a status of <strong>Active</strong> and a valid email address will receive this.</li>
           <li>Vacated members are automatically excluded from the mailing list.</li>
-          <li>Do not use this for spam, as your email provider might block your address.</li>
+          <li>Do not use this for personal messages; it is strictly a bulk-messaging tool.</li>
         </ul>
       </div>
+
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-900 border border-gray-700 p-6 rounded-2xl max-w-sm w-full shadow-2xl relative">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                <AlertCircle size={32} className="text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2 text-center">Are you sure?</h2>
+            <p className="text-gray-400 text-center mb-6">
+                This will send an email to <strong>ALL</strong> active members immediately. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-white rounded-lg transition-colors border border-gray-700 font-semibold"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSendAnnouncement}
+                className="flex-1 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-dark-900 rounded-lg transition-colors font-bold flex items-center justify-center gap-2"
+              >
+                <Send size={18} /> Yes, Send it!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, XCircle, Users, FileText } from 'lucide-react';
+import { Edit2, XCircle, Users, FileText, Trash2, Save, Search } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { filterByDateRange } from '../utils';
@@ -14,6 +14,7 @@ export default function Members() {
   const [rooms, setRooms] = useState([]);
   const [vacatingMember, setVacatingMember] = useState(null);
   const [damages, setDamages] = useState(0);
+  const [editingMember, setEditingMember] = useState(null);
 
   const fetchMembers = () => {
     fetch(`${API_URL}?action=get_members`)
@@ -131,6 +132,22 @@ export default function Members() {
     doc.setTextColor(200, 0, 0);
     doc.text("PG IS NOT RESPONSIBLE IN CASE OF LOSS OF ANY OF YOUR BELONGINGS", 105, yPos, null, null, "center");
 
+    yPos += 12;
+    doc.setFontSize(10);
+    doc.setTextColor(212, 175, 55);
+    doc.setFont(undefined, 'bold');
+    doc.text("Thank you for choosing NextGen Luxury Stay for Men.", 105, yPos, null, null, "center");
+
+    yPos += 15;
+    doc.setTextColor(0);
+    doc.setFontSize(9);
+    doc.text("Authorized Signature:", 15, yPos);
+    
+    yPos += 8;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text("Purna Chandra (Owner)", 15, yPos);
+
     if (isDownload) {
       doc.save(`Receipt_${memberData.name.replace(' ', '_')}.pdf`);
       return null;
@@ -201,10 +218,68 @@ export default function Members() {
     }
   };
 
-  const [filterRange, setFilterRange] = useState('All Time');
-  const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
+  const [memberToDelete, setMemberToDelete] = useState(null);
 
-  const filteredMembers = members.filter(m => filterByDateRange(m.joining_date, filterRange));
+  const confirmDelete = async () => {
+    if (!memberToDelete) return;
+    try {
+      const response = await fetch(`${API_URL}?action=delete_member`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ member_id: memberToDelete })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMemberToDelete(null);
+        fetchMembers();
+        fetchRooms();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${API_URL}?action=edit_member`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            member_id: editingMember.id,
+            name: editingMember.name,
+            email: editingMember.email,
+            phone: editingMember.phone,
+            monthly_rent: editingMember.monthly_rent,
+            advance_paid: editingMember.advance_paid
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setEditingMember(null);
+        fetchMembers();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const [filterRange, setFilterRange] = useState('All Time');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const availableRanges = ['All Time', 'Today', 'This Week', 'This Month', 'Custom'];
+
+  const filteredMembers = members.filter(m => {
+    const matchesDate = filterByDateRange(m.joining_date, filterRange, customStart, customEnd);
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || 
+        (m.name && m.name.toLowerCase().includes(searchLower)) ||
+        (m.phone && m.phone.toLowerCase().includes(searchLower)) ||
+        (m.email && m.email.toLowerCase().includes(searchLower)) ||
+        (m.room_number && m.room_number.toString().includes(searchLower));
+    return matchesDate && matchesSearch;
+  });
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -236,7 +311,17 @@ export default function Members() {
         <h1 className="text-2xl md:text-3xl font-bold text-gold-500 flex items-center gap-3">
           <Users size={32} className="hidden md:block" /> Member Management
         </h1>
-        <div className="flex gap-4 w-full md:w-auto">
+        <div className="flex gap-4 w-full md:w-auto flex-wrap md:flex-nowrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search members..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-dark-900 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-gold-500"
+            />
+          </div>
           <select 
             className="bg-dark-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-gold-500 flex-1 md:flex-none"
             value={filterRange}
@@ -246,6 +331,14 @@ export default function Members() {
               <option key={r} value={r}>{r}</option>
             ))}
           </select>
+          
+          {filterRange === 'Custom' && (
+            <div className="flex gap-2 items-center flex-1 md:flex-none">
+              <input type="date" className="bg-dark-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500 w-full" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+              <span className="text-gray-400">to</span>
+              <input type="date" className="bg-dark-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500 w-full" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+            </div>
+          )}
           <button 
             onClick={handleExportPDF}
             className="flex items-center gap-2 bg-dark-800 hover:bg-dark-700 text-gray-300 hover:text-white border border-gray-700 px-4 py-2 rounded-lg transition-colors flex-1 md:flex-none justify-center font-semibold"
@@ -396,8 +489,11 @@ export default function Members() {
                         <button onClick={() => generateReceiptPDF(member, member.room_number, member.bed_name, true)} title="Download Receipt" className="p-2 bg-dark-800 hover:bg-gold-500/20 text-gold-500 rounded-lg transition-colors border border-gold-500/30">
                           <FileText size={16} />
                         </button>
-                        <button className="p-2 bg-dark-800 hover:bg-dark-700 text-gray-400 hover:text-white rounded-lg transition-colors border border-gray-700">
+                        <button onClick={() => setEditingMember(member)} title="Edit Member" className="p-2 bg-dark-800 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 rounded-lg transition-colors border border-blue-500/30">
                           <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => setMemberToDelete(member.id)} title="Permanent Delete" className="p-2 bg-dark-800 hover:bg-red-500/20 text-red-500 hover:text-red-400 rounded-lg transition-colors border border-red-500/30">
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -446,6 +542,80 @@ export default function Members() {
             <button onClick={handleVacateConfirm} className="w-full btn-primary !bg-red-500 hover:!bg-red-600 !text-white !shadow-none border-0">
               Confirm Move-Out
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {editingMember && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-900 border border-gray-700 p-6 rounded-2xl max-w-md w-full relative shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+            <button onClick={() => setEditingMember(null)} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+              <XCircle size={24} />
+            </button>
+            <h2 className="text-2xl font-bold text-gold-500 mb-6">Edit Member Details</h2>
+            
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Full Name</label>
+                <input type="text" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none"
+                  value={editingMember.name} onChange={e => setEditingMember({...editingMember, name: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Email Address</label>
+                <input type="email" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none"
+                  value={editingMember.email} onChange={e => setEditingMember({...editingMember, email: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
+                <input type="tel" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none"
+                  value={editingMember.phone} onChange={e => setEditingMember({...editingMember, phone: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Advance (₹)</label>
+                  <input type="number" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none"
+                    value={editingMember.advance_paid} onChange={e => setEditingMember({...editingMember, advance_paid: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Monthly Rent (₹)</label>
+                  <input type="number" required className="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 focus:border-gold-500 focus:outline-none"
+                    value={editingMember.monthly_rent} onChange={e => setEditingMember({...editingMember, monthly_rent: e.target.value})} />
+                </div>
+              </div>
+              <button type="submit" className="w-full btn-primary mt-4 flex justify-center items-center gap-2">
+                <Save size={20} /> Save Changes
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Modal */}
+      {memberToDelete && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-900 border border-gray-700 p-6 rounded-2xl max-w-sm w-full shadow-2xl relative">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                <Trash2 size={32} className="text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2 text-center">Are you sure?</h2>
+            <p className="text-gray-400 text-center mb-6">
+                You are about to <strong className="text-red-400">PERMANENTLY DELETE</strong> this member and their payment history. This action cannot be undone!
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setMemberToDelete(null)}
+                className="flex-1 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-white rounded-lg transition-colors border border-gray-700 font-semibold"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-bold flex items-center justify-center gap-2"
+              >
+                <Trash2 size={18} /> Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

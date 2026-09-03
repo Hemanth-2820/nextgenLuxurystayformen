@@ -1,5 +1,50 @@
 <?php
 require_once 'config.php';
+require_once 'PHPMailer/Exception.php';
+require_once 'PHPMailer/PHPMailer.php';
+require_once 'PHPMailer/SMTP.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+function send_smtp_email($to, $subject, $body, $pdfBase64 = null, $pdfName = null) {
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'mail.nexlifly.in'; // Changed to main domain
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'info@nextgen.nexlifly.in';
+        $mail->Password   = 'nextgen@2026';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        // Bypass SSL certificate issues on cPanel
+        $mail->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        );
+
+        $mail->setFrom('info@nextgen.nexlifly.in', 'NextGen Luxury Stay');
+        $mail->addAddress($to);
+
+        if ($pdfBase64 && $pdfName) {
+            $base64_data = preg_replace('/^data:application\/pdf;base64,/', '', $pdfBase64);
+            $mail->addStringAttachment(base64_decode($base64_data), $pdfName, 'base64', 'application/pdf');
+        }
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $body;
+
+        $mail->send();
+        return "SUCCESS";
+    } catch (Exception $e) {
+        error_log("Mailer Error: " . $mail->ErrorInfo);
+        return $mail->ErrorInfo;
+    }
+}
 
 $action = $_GET['action'] ?? '';
 
@@ -105,17 +150,7 @@ try {
         $to = $input['email'];
         if (!empty($to)) {
             $subject = "Welcome to NextGen Luxury Stay!";
-            $boundary = md5(time());
-            
-            $headers = "MIME-Version: 1.0\r\n";
-            $headers .= "From: NextGen Luxury Stay <info@nextgen.nexlifly.in>\r\n";
-            $headers .= "Content-Type: multipart/mixed; boundary=\"$boundary\"\r\n";
-            
-            $body = "--$boundary\r\n";
-            $body .= "Content-Type: text/html; charset=UTF-8\r\n";
-            $body .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
-            
-            $body .= "
+            $body = "
             <html>
             <head>
                 <style>
@@ -151,23 +186,10 @@ try {
                 </div>
             </body>
             </html>
-            \r\n\r\n";
+            ";
             
-            // Attach PDF if provided
-            if (!empty($input['pdf_base64'])) {
-                $base64_data = preg_replace('/^data:application\/pdf;base64,/', '', $input['pdf_base64']);
-                $chunked_base64 = chunk_split($base64_data);
-                
-                $body .= "--$boundary\r\n";
-                $body .= "Content-Type: application/pdf; name=\"Welcome_Receipt.pdf\"\r\n";
-                $body .= "Content-Disposition: attachment; filename=\"Welcome_Receipt.pdf\"\r\n";
-                $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
-                $body .= $chunked_base64 . "\r\n\r\n";
-            }
-            
-            $body .= "--$boundary--";
-            
-            mail($to, $subject, $body, $headers);
+            $pdfBase64 = !empty($input['pdf_base64']) ? $input['pdf_base64'] : null;
+            send_smtp_email($to, $subject, $body, $pdfBase64, 'Welcome_Receipt.pdf');
         }
 
         echo json_encode(["success" => true]);
@@ -199,10 +221,6 @@ try {
         if ($payment && !empty($payment['email'])) {
             $to = $payment['email'];
             $subject = "Payment Received - NextGen Luxury Stay";
-            
-            $headers = "MIME-Version: 1.0\r\n";
-            $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-            $headers .= "From: NextGen Luxury Stay <info@nextgen.nexlifly.in>\r\n";
             
             $message = "
             <html>
@@ -241,7 +259,7 @@ try {
             </html>
             ";
             
-            mail($to, $subject, $message, $headers);
+            send_smtp_email($to, $subject, $message);
         }
 
         echo json_encode(["success" => true]);
@@ -259,6 +277,36 @@ try {
             $conn->prepare("UPDATE rooms SET current_occupancy = current_occupancy - 1 WHERE id = ?")->execute([$member['room_id']]);
             $conn->prepare("UPDATE members SET status = 'Vacated', room_id = NULL, bed_id = NULL WHERE id = ?")->execute([$member_id]);
         }
+        echo json_encode(["success" => true]);
+
+    } elseif ($action === 'delete_member') {
+        $member_id = $input['member_id'];
+        
+        $stmt = $conn->prepare("SELECT room_id, bed_id, status FROM members WHERE id = ?");
+        $stmt->execute([$member_id]);
+        $member = $stmt->fetch();
+        
+        if ($member && $member['status'] === 'Active') {
+            $conn->prepare("UPDATE beds SET is_occupied = FALSE WHERE id = ?")->execute([$member['bed_id']]);
+            $conn->prepare("UPDATE rooms SET current_occupancy = current_occupancy - 1 WHERE id = ?")->execute([$member['room_id']]);
+        }
+        
+        $conn->prepare("DELETE FROM payments WHERE member_id = ?")->execute([$member_id]);
+        $conn->prepare("DELETE FROM complaints WHERE member_id = ?")->execute([$member_id]);
+        $conn->prepare("DELETE FROM members WHERE id = ?")->execute([$member_id]);
+        
+        echo json_encode(["success" => true]);
+
+    } elseif ($action === 'edit_member') {
+        $stmt = $conn->prepare("UPDATE members SET name = ?, email = ?, phone = ?, monthly_rent = ?, advance_paid = ? WHERE id = ?");
+        $stmt->execute([
+            $input['name'],
+            $input['email'],
+            $input['phone'],
+            $input['monthly_rent'],
+            $input['advance_paid'],
+            $input['member_id']
+        ]);
         echo json_encode(["success" => true]);
 
     } elseif ($action === 'get_expenses') {
@@ -344,10 +392,6 @@ try {
             $to = $m['email'];
             $subject = "Important Announcement - NextGen Luxury Stay";
             
-            $headers = "MIME-Version: 1.0\r\n";
-            $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-            $headers .= "From: NextGen Luxury Stay <info@nextgen.nexlifly.in>\r\n";
-            
             $safe_message = nl2br(htmlspecialchars($message_body));
             
             $html = "
@@ -384,10 +428,19 @@ try {
             </html>
             ";
             
-            mail($to, $subject, $html, $headers);
-            $success_count++;
+            $status = send_smtp_email($to, $subject, $html);
+            if($status === "SUCCESS") {
+                $success_count++;
+            } else {
+                $error_msg = $status;
+            }
         }
-        echo json_encode(["success" => true, "sent_count" => $success_count]);
+        
+        if (isset($error_msg) && $success_count == 0) {
+            echo json_encode(["success" => false, "error" => $error_msg]);
+        } else {
+            echo json_encode(["success" => true, "sent_count" => $success_count]);
+        }
 
     } else {
         http_response_code(400);

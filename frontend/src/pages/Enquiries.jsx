@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PhoneCall, CheckCircle2, XCircle, FileText, Trash2 } from 'lucide-react';
+import { PhoneCall, CheckCircle2, XCircle, FileText, Trash2, Search } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { filterByDateRange } from '../utils';
@@ -75,9 +75,20 @@ export default function Enquiries() {
   };
 
   const [filterRange, setFilterRange] = useState('All Time');
-  const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const availableRanges = ['All Time', 'Today', 'This Week', 'This Month', 'Custom'];
 
-  const filteredEnquiries = enquiries.filter(e => filterByDateRange(e.created_at, filterRange));
+
+  const filteredEnquiries = enquiries.filter(e => {
+    const matchesDate = filterByDateRange(e.created_at, filterRange, customStart, customEnd);
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || 
+        (e.name && e.name.toLowerCase().includes(searchLower)) ||
+        (e.phone && e.phone.toLowerCase().includes(searchLower));
+    return matchesDate && matchesSearch;
+  });
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -109,9 +120,19 @@ export default function Enquiries() {
         <h1 className="text-2xl md:text-3xl font-bold text-gold-500 flex items-center gap-3">
           <PhoneCall size={32} className="hidden md:block" /> Lead & Enquiries Tracker
         </h1>
-        <div className="flex gap-4 w-full md:w-auto">
+        <div className="flex gap-4 w-full md:w-auto flex-wrap md:flex-nowrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search leads..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-dark-900 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-gold-500"
+            />
+          </div>
           <select 
-            className="bg-dark-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-gold-500 flex-1 md:flex-none"
+            className="bg-dark-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-gold-500 w-full md:w-auto"
             value={filterRange}
             onChange={(e) => setFilterRange(e.target.value)}
           >
@@ -119,6 +140,14 @@ export default function Enquiries() {
               <option key={r} value={r}>{r}</option>
             ))}
           </select>
+          
+          {filterRange === 'Custom' && (
+            <div className="flex gap-2 items-center w-full md:w-auto">
+              <input type="date" className="bg-dark-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500 w-full" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+              <span className="text-gray-400">to</span>
+              <input type="date" className="bg-dark-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500 w-full" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+            </div>
+          )}
           <button 
             onClick={handleExportPDF}
             className="flex items-center gap-2 bg-dark-800 hover:bg-dark-700 text-gray-300 hover:text-white border border-gray-700 px-4 py-2 rounded-lg transition-colors flex-1 md:flex-none justify-center font-semibold"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Receipt, Plus, FileText } from 'lucide-react';
+import { Receipt, Plus, FileText, Search } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { filterByDateRange } from '../utils';
@@ -50,10 +50,21 @@ export default function Expenses() {
   };
 
   const [filterRange, setFilterRange] = useState('All Time');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const availableRanges = ['All Time', 'Today', 'This Week', 'This Month', 'Custom'];
 
-  const availableRanges = ['All Time', 'Today', 'This Week', 'This Month'];
 
-  const filteredExpenses = expenses.filter(exp => filterByDateRange(exp.expense_date, filterRange));
+
+  const filteredExpenses = expenses.filter(exp => {
+    const matchesDate = filterByDateRange(exp.expense_date, filterRange, customStart, customEnd);
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || 
+        (exp.title && exp.title.toLowerCase().includes(searchLower)) ||
+        (exp.category && exp.category.toLowerCase().includes(searchLower));
+    return matchesDate && matchesSearch;
+  });
 
   const totalFilteredExpenses = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
 
@@ -89,16 +100,34 @@ export default function Expenses() {
         </h1>
         
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
-          <div className="flex gap-4 w-full md:w-auto">
+          <div className="flex gap-4 w-full md:w-auto flex-wrap md:flex-nowrap">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search expenses..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-dark-900 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-gold-500"
+              />
+            </div>
             <select 
-              className="bg-dark-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-gold-500 flex-1 md:flex-none"
-              value={filterRange}
-              onChange={(e) => setFilterRange(e.target.value)}
-            >
-              {availableRanges.map(r => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+            className="bg-dark-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-gold-500 w-full md:w-auto"
+            value={filterRange}
+            onChange={(e) => setFilterRange(e.target.value)}
+          >
+            {availableRanges.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          
+          {filterRange === 'Custom' && (
+            <div className="flex gap-2 items-center w-full md:w-auto">
+              <input type="date" className="bg-dark-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500 w-full" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+              <span className="text-gray-400">to</span>
+              <input type="date" className="bg-dark-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500 w-full" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+            </div>
+          )}
             <button 
               onClick={handleExportPDF}
               className="flex items-center gap-2 bg-dark-800 hover:bg-dark-700 text-gray-300 hover:text-white border border-gray-700 px-4 py-2 rounded-lg transition-colors flex-1 md:flex-none justify-center font-semibold"
